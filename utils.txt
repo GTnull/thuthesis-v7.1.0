@@ -1,1 +1,5 @@
 https://zhuanlan.zhihu.com/p/51870057 LSTM原理
+https://towardsdatascience.com/a-gentle-introduction-to-neural-networks-series-part-1-2b90b87795bc A Gentle Introduction To Neural Networks Series — Part 1 
+
+必须要进行case study
+进行模型对比实验
