@@ -1,5 +1,10 @@
 https://zhuanlan.zhihu.com/p/51870057 LSTM原理
 https://towardsdatascience.com/a-gentle-introduction-to-neural-networks-series-part-1-2b90b87795bc A Gentle Introduction To Neural Networks Series — Part 1 
+http://www.atyun.com/30234.html  一份详细的LSTM和GRU图解
+
 
 必须要进行case study
 进行模型对比实验
+
+对比了xxx模型，效果如何，
+第三章基本完成，但是还有很多公式需要打出来。
