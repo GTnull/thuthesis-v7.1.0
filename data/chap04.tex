@@ -222,7 +222,7 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
 
 % 循环神经网络解决了这个问题。它们是带有循环的网络，允许信息持续存在。循环神经网络可以被认为是同一个网络的多个副本，每个副本都会向后继者传递信息。
 \section{实验方案设计及实验流程}
-
+\begin{equation*} hl=[hl_{1},\ hl_{2},\ \ldots,\ hl_{n-f+1}] \tag{-} \end{equation*}
 
 \section{算法性能评估}
 
@@ -267,6 +267,19 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
     \end{table*}
 
 \subsection{基于开源数据集的检测结果}
+\begin{algorithm}
+    \caption{A}
+    \label{alg:A}
+    % \begin{algorithmic}
+    \STATE {set $r(t)=x(t)$} 
+    \REPEAT 
+    \STATE set $h(t)=r(t)$ 
+    \REPEAT
+    \STATE set $h(t)=r(t)$ 
+    \UNTIL{B} 
+    \UNTIL{B}
+    % \end{algorithmic}
+    \end{algorithm}
 
 \subsection{基于真实数据的检测结果}
 
