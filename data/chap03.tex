@@ -315,3 +315,13 @@ Idle Mean			Mean time a flow was idle before becoming active \\
 Idle Max			Maximum time a flow was idle before becoming active \\
 Idle Std			Standard deviation time a flow was idle before becoming active \\
 \section{校园网真实数据集}
+校园网规模巨大，每天有海量的数据，这给我们的分析带来了很多困难。
+首先输入数据是pcap形式的流量数据，如下图~\ref{fig:wireshark}所示，包含每个数据包的详细信息，如五元组、报文内容
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.3]{wireshark流量图.png}
+    % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
+    \caption{流量数据示意图}
+    \label{fig:wireshark}
+  \end{figure}
