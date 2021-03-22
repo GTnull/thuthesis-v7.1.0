@@ -215,9 +215,28 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
     h[X^{t-T+1}, X^{t-T+2},...,X^{t}; G] \Rightarrow [X^{t+1}, X^{t+2}, ..., X^{t+T}]
 \end{equation}
 
+\begin{equation}
+    r^{(t)} = \sigma(\Theta_r\star G[X^{(t)},H^{t-1}] + b_r)
+\end{equation}
 
+\begin{equation}
+    u^{(t)} = \sigma(\Theta_u\star G[X^{(t)},H^{t-1}] + b_u)
+\end{equation}
 
+\begin{equation}
+    C^{(t)} = tanh(\Theta_C\star_G[X^{(t)},(r^{(t)}\odot H^{(t-1)})] + b_c)
+\end{equation}
 
+\begin{equation}
+    H^{(t)} = u^{(t)}\odot H^{(t-1)} + (1 - u^{(t)}) \odot C^{(t)}
+\end{equation}
+
+其中$X^{(t)}$, $H^{(t)}$表示在时间 $t$ 的输入和输出，$r^{(t)}$ $u^{(t)}$分别是在时间 $t$的复位门和更新门。$\star_G$  表示在等式 2 中定义的扩散卷积，并且  是对应滤波器的参数。与GRU相似，DCGRU可用于构建递归神经网络层，并使用反向传播进行训练。
+
+我们利用递归神经网络（RNN）对时间依赖性进行建模。特别是，我们使用门控循环单元（GRU）（Chung等，2014），它是RNN的简单而强大的变体。我们用扩散卷积代替了GRU中的矩阵乘法，这导致了我们提出的扩散卷积门控递归单元（DCGRU）。
+
+\subsection{aa}
+通常，计算卷积会很费时。 但是，如果$G$稀疏，则可以使用总时间复杂度 $O(K \mid \varepsilon \mid）\ll O(N^ 2)$ 递归稀疏矩阵乘法来有效地计算方程2。
 
 
 % 循环神经网络解决了这个问题。它们是带有循环的网络，允许信息持续存在。循环神经网络可以被认为是同一个网络的多个副本，每个副本都会向后继者传递信息。
