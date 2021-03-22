@@ -245,7 +245,7 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
 
 \section{算法性能评估}
 
-其中多分类任务的准确率指标为对于每个标签，分别计算precision，然后取不加权平均。
+其中多分类任务的准确率指标为对于每个标签，分别计算precision，然后取不加权平均。$\mathbb{E}$
 
 \begin{table*}[t]
     \small
@@ -299,6 +299,65 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
 %     \UNTIL{B}
 %     % \end{algorithmic}
 %     \end{algorithm}
+\begin{algorithm}[!h]
+    \caption{\emph{GSNN}}
+    \label{alg}
+    \begin{algorithmic}[1]
+      \Require
+        一组按时间排序的向量组$\vec{x_1}$,$\vec{x_2}$,...,$\vec{x_T}$, 特征间关系图$G$以及它的邻接矩阵$W$
+
+      \Ensure
+        按时间排序的向量组$\vec{h_1}$,$\vec{h_2}$,...,$\vec{h_T}$
+      \State 通过Xavier方法初始化$q_{net1}$, $q_{net2}$ and $p_{net}$的所有参数
+      \While {$\mathcal{L}$没有收敛}
+          \State 利用公式 计算每一个节点$v$的$q_\phi(\bm{y}_v | \bm{A}, \bm{X}, Y_L)$以及$h_v^{K-1}$
+          \For{i $\leftarrow$ $1$ to $m$}
+          \State 从分布$q_\phi(Y_U | \bm{A}, \bm{X}, Y_L)$中采样$Y_U$
+          \State 在采样得到的$Y_U$基础上，利用公式计算$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 
+           \For{j $\leftarrow$ $1$ to $n$}
+           \State 从分布$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 中采样$\bm{z}$
+           \State 在采样得到的$\bm{z}$基础上用公式 计算$p_{\theta}(\bm{y}_v|\bm{A}, \bm{X}, \bm{z})$
+           \EndFor
+          \EndFor
+          \State 用公式计算目标函数$\mathcal{L}(\theta, \phi)$ 
+          \State 用梯度下降法更新$q_{net1}$，$q_{net2}$和$p_{net}$的所有参数
+      \EndWhile
+      %\State \Return $P_{net}$
+    \end{algorithmic}
+  \end{algorithm}
+
+
+
+$  state_t = 0
+  for input_t in input_sequence:
+    output_t = activation(dot(W, input_t) + dot(U, state_t) + b)
+    state_t = output_t$
+%   \begin{algorithm}[!h]
+%     \caption{\emph{GSNN}}
+%     \label{alg}
+%     \begin{algorithmic}[1]
+%       \Require
+%         图$G$以及它的邻接矩阵$A$，节点特征矩阵$X$以及已知节点的标签信息$T_L$，采样得到的$Y_U$和$\bm{z}$的数量：$m$和$n$
+
+%       \Ensure
+%         优化后的$q_{net1}$, $q_{net2}$和$p_{net}$所有参数
+%       \State 通过Xavier方法\cite{glorot2010understanding}初始化$q_{net1}$, $q_{net2}$ and $p_{net}$的所有参数
+%       \While {$\mathcal{L}$没有收敛}
+%           \State 利用公式 \ref{seven} 计算每一个节点$v$的$q_\phi(\bm{y}_v | \bm{A}, \bm{X}, Y_L)$以及$h_v^{K-1}$
+%           \For{i $\leftarrow$ $1$ to $m$}
+%           \State 从分布$q_\phi(Y_U | \bm{A}, \bm{X}, Y_L)$中采样$Y_U$
+%           \State 在采样得到的$Y_U$基础上，利用公式 \ref{eight}计算$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 
+%            \For{j $\leftarrow$ $1$ to $n$}
+%            \State 从分布$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 中采样$\bm{z}$
+%            \State 在采样得到的$\bm{z}$基础上用公式\ref{nine} 计算$p_{\theta}(\bm{y}_v|\bm{A}, \bm{X}, \bm{z})$
+%            \EndFor
+%           \EndFor
+%           \State 用公式\ref{ten}计算目标函数$\mathcal{L}(\theta, \phi)$ 
+%           \State 用梯度下降法更新$q_{net1}$，$q_{net2}$和$p_{net}$的所有参数
+%       \EndWhile
+%       %\State \Return $P_{net}$
+%     \end{algorithmic}
+%   \end{algorithm}
 
 \subsection{基于真实数据的检测结果}
 
