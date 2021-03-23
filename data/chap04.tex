@@ -110,6 +110,11 @@
 
 \subsection{RNN}
 RNN是一种针对时序数据处理的神经网络模型。相较于普通的神经网络模型来说，更擅长处理序列数据，即该网络其具有短期记忆能力。在循环神经网络中，神经元不但可以接受其他神经元的信息，也可以接受自身的信息，形成具有环路的网络结构。
+
+循环神经网络的通用近似定理[Haykin, 2009]： 如果一个完全
+连接的循环神经网络有足够数量的sigmoid 型隐藏神经元，它可以以任意
+的准确率去近似任何一个非线性动力系统
+
 % 神经网络有很多类型，这里本文将神经网络划分为前馈神经网络和循环神经网络，其中前馈神经网络包含单层感知机、多层感知机（MLP）、卷积神经网络（CNN）等。
 % 本文主要介绍循环神经网络， 循环神经网络（Recurrent Neural Network，RNN）是一类具有短期记忆能力的神经网络。．和前馈神经网络相比，循环神经网络更加符合生物神经网络的结构。
 下图~\ref{fig:循环神经网络}是循环神经网络的示意图。
@@ -208,7 +213,57 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
         h_t = (1- z_t) * h_{t-1} + z_t * \widetilde{h_t}
     \end{aligned}
 \end{equation}
+由图中结构可以看出，GRU是通过一个循环神经网络和“门”机制来不断更新内部参数，GRU算法的伪代码如下表所示。
 
+\begin{algorithm}[!h]
+    \caption{\emph{GRU}}
+    \label{alg}
+    \begin{algorithmic}[1]
+      \Require
+        t
+
+      \Ensure
+        内部参数
+      \State 初始化t时刻单元状态
+      \For{t $\leftarrow$ $1$ to $T$}
+        $output_t$ = t
+        $state_t$ = $output_t$
+      \EndFor
+    % %   \While {$\mathcal{L}$没有收敛}
+    %       \State 利用公式 计算每一个节点$v$的$q_\phi(\bm{y}_v | \bm{A}, \bm{X}, Y_L)$以及$h_v^{K-1}$
+    %       \For{i $\leftarrow$ $1$ to $m$}
+    %       \State 从分布$q_\phi(Y_U | \bm{A}, \bm{X}, Y_L)$中采样$Y_U$
+    %       \State 在采样得到的$Y_U$基础上，利用公式计算$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 
+    %        \For{j $\leftarrow$ $1$ to $n$}
+    %        \State 从分布$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 中采样$\bm{z}$
+    %        \State 在采样得到的$\bm{z}$基础上用公式 计算$p_{\theta}(\bm{y}_v|\bm{A}, \bm{X}, \bm{z})$
+    %        \EndFor
+    %       \EndFor
+    %       \State 用公式计算目标函数$\mathcal{L}(\theta, \phi)$ 
+    %       \State 用梯度下降法更新$q_{net1}$，$q_{net2}$和$p_{net}$的所有参数
+    %   \EndWhile
+      %\State \Return $P_{net}$
+    \end{algorithmic}
+  \end{algorithm}
+
+\begin{algorithm}[!h]
+    \caption{\emph{LSTM层}}
+    \begin{algorithmic}[1]
+        \Require 一组按时间排列的向量组
+        \Ensure 按时间排列的向量组
+        \State $\vec C_0 = \vec 0$
+        \State $\vec h_0 = \vec 0$
+        \For{$t$ \leftarrow $1$ to $T$}
+
+
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+  
+$  state_t = 0
+  for input_t in input_sequence:
+    output_t = activation(dot(W, input_t) + dot(U, state_t) + b)
+    state_t = output_t$
 \section{基于图结构的RNN}
 有向权重图$G=(V,E,W)$,$V$表示特征节点的集合，其中$|V|=N$, $E$表示特征间的关联关系，即图中的边，$W∈R[N*N]$为特征节点的相似度的加权邻接矩阵。将流量表示为G的一个图信号，P为每个节点特征数，则-时间t观察到的图信号。那么流量预测目的就是：给定G下，学得一个函数将T'个历史图信号映射到未来T时刻的图信号：
 \begin{equation}
@@ -236,7 +291,7 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
 我们利用递归神经网络（RNN）对时间依赖性进行建模。特别是，我们使用门控循环单元（GRU）（Chung等，2014），它是RNN的简单而强大的变体。我们用扩散卷积代替了GRU中的矩阵乘法，这导致了我们提出的扩散卷积门控递归单元（DCGRU）。
 
 \subsection{aa}
-通常，计算卷积会很费时。 但是，如果$G$稀疏，则可以使用总时间复杂度 $O(K \mid \varepsilon \mid）\ll O(N^ 2)$ 递归稀疏矩阵乘法来有效地计算方程2。
+通常，计算卷积会很费时。 但是，如果$G$稀疏，则可以使用总时间复杂度 $O(K \mid \varepsilon \mid \ll O(N^ 2)$ 递归稀疏矩阵乘法来有效地计算方程2。
 
 
 % 循环神经网络解决了这个问题。它们是带有循环的网络，允许信息持续存在。循环神经网络可以被认为是同一个网络的多个副本，每个副本都会向后继者传递信息。
@@ -300,7 +355,7 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
 %     % \end{algorithmic}
 %     \end{algorithm}
 \begin{algorithm}[!h]
-    \caption{\emph{GSNN}}
+    \caption{\emph{GRNN}}
     \label{alg}
     \begin{algorithmic}[1]
       \Require
@@ -328,10 +383,7 @@ LSTM也具有这种链式结构，但循环单元里面不再是只有单一的�
 
 
 
-$  state_t = 0
-  for input_t in input_sequence:
-    output_t = activation(dot(W, input_t) + dot(U, state_t) + b)
-    state_t = output_t$
+
 %   \begin{algorithm}[!h]
 %     \caption{\emph{GSNN}}
 %     \label{alg}
@@ -360,6 +412,13 @@ $  state_t = 0
 %   \end{algorithm}
 
 \subsection{基于真实数据的检测结果}
+交叉熵损失函数经常用于分类问题中，特别是在神经网络做分类问题时，也经常使用交叉熵作为损失函数，此外，由于交叉熵涉及到计算每个类别的概率，所以交叉熵几乎每次都和sigmoid(或softmax)函数一起出现。
+
+我们用神经网络最后一层输出的情况，来看一眼整个模型预测、获得损失和学习的流程：
+
+神经网络最后一层得到每个类别的得分scores；
+该得分经过sigmoid(或softmax)函数获得概率输出；
+模型预测的类别概率输出与真实类别的one hot形式进行交叉熵损失函数的计算。
 
 \chapter{流量检测系统的设计与实现}
 
