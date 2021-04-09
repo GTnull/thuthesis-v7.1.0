@@ -6,7 +6,7 @@
 UNSW-NB15 数据集是 2015 年澳大利亚网络安全中心使用 IXIA Perfect Storm工具模拟网络环境流量而生成的一个数据集。相比于 KDD99 是一个更新的数据集，因此更能代表真实的网络流量。UNSW-NB15 数据集中包括 100GB的.pcap 格式的原始网络流量，同时还有 4 个经过特征提取的 csv 文件，分别是UNSW-NB15\_1.csv  、 UNSW-NB15\_2.csv 、 UNSW-NB15\_3.csv  和   UNSW-NB15\_4.csv，一共是 2540044 条数据，同时该数据集提出了与 KDD99 较为不同的特征，这些特征更为符合当前的网络协议模式。 UNSW-NB15 一共包含有 10 个分类，一个正常类别和 9 个攻击类别，其具体描述和类别数目如下表所示： 
 % 表 3.2 攻击类型描述和数目 
 
-\flushleft{
+% \flushleft{
 
     \begin{table}[H]
         \begin{tabular}{|p{0.1\textwidth}<{\centering} |p{0.7\textwidth}<{\centering} |p{0.1\textwidth}<{\centering}|}
@@ -53,7 +53,7 @@ UNSW-NB15 数据集是 2015 年澳大利亚网络安全中心使用 IXIA Perfect
         \end{tabular}
         \end{table}
 
-}
+
 
 
  
@@ -287,13 +287,83 @@ Idle Std			Standard deviation time a flow was idle before becoming active \\
 \section{校园网真实数据集}
 
 校园网规模巨大，每天有海量的数据，这给我们的分析带来了很多困难。
-首先输入数据是pcap形式的流量数据，如下图~\ref{fig:wireshark}所示，包含每个数据包的详细信息，如五元组、报文内容
+校园网的原始数据为抓包（Packet Capture，pcap）流量，如下图~\ref{fig:wireshark}所示，包含每个数据包的详细信息，如五元组、报文内容等。
 
 \begin{figure}
     \centering
-    \includegraphics[scale=0.1]{wireshark流量图.png}
+    \includegraphics[scale=0.2]{wireshark流量图.png}
     % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
     \caption{流量数据示意图}
     \label{fig:wireshark}
   \end{figure}
 
+  对于机器学习模型来说，通常
+  不是直接对原始的流量进行检测，而是通过对流量提取特征，得到样本的特征向
+  量后进行检测和分类。因此数据集的制作流程如图所示:
+  \begin{figure}
+    \centering
+    \includegraphics[scale=0.6]{流量数据集制作流程.png}
+    % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
+    \caption{流量数据集制作流程}
+    \label{fig:flow}
+  \end{figure}
+
+
+经过第5章的特征提取模块，我们得到了特征数据集，但是由于缺乏标注，该数据集无法进行训练以及验证。因此为了得到可进行训练的有效数据集，我们还需要对特征数据集进行标注。标注数据是根据现有的NOC平台得到，需要进行数据清洗、数据预处理等步骤。下图为NOC平台的数据样例。
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.6]{NOC平台.png}
+    % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
+    \caption{NOC平台数据样例}
+    \label{fig:NOC}
+  \end{figure}
+
+\section{数据预处理及评价指标}
+数据预处理阶段，首先对数据进行数据清洗，消除不必要的噪声数据。后续操作总结如下：
+
+1. 删除套接字信息：由于原始数据集包含网络中源主机和目标主机的 IP 地址和端口号，因此删除这些信息以提供无偏检测非常重要，使用这些信息可能会导致对该套接字信息的过度训练。
+
+2. 删除空格：数据集中的一些多类标签包含空格。由于实际值不同于同一
+类中其他元组的标签，因此这些空白会导致不同的类。
+
+3. 标签编码：数据集中的多个类标签都有攻击的名称，即字符串值。因此
+这些值编码成数值是很重要的，分类器就可以学习每个元组所属的类号。
+
+4. 数据规范化：数据集中的数值数据属于不同的范围，这给分类器在训练
+过程中补偿这些差异带来了一些挑战。因此，规范化每个属性中的值很重要，这
+样，每个属性中的最小值为零，而最大值为一。这为分类器提供了更均匀的值，
+同时保持了每个属性值之间的相关性。
+
+在实验中，本论文使用四个指标来评估模型的性能：准确率，精确度，召回
+率和 $F1-score$。对于一个数据样本检测的结果可分为下面的结果：
+
+1. TP：入侵网络流量被入侵检测正确的识别为入侵网络流量
+
+2. TN：正常网络流量被入侵检测正确的识别为正常网络流量
+
+3. FN：入侵网络流量被入侵检测错误的识别为正常网络流量
+
+4. FP：正常网络流量被入侵检测错误的识别成入侵网络流量
+
+论文使用下面的方法去评估我们提出方法的性能：
+准确率（Accuracy）: 预测正确的样本的数量与所有被预测样本数量的比值，
+公示如 所示。
+\begin{equation}
+    Accuracy = \frac{TP + TN}{TP + TN + FN + FP}
+\end{equation}
+
+精确度（Precision）: 这个指标于分类器衡量的被错误分类的数量所惩罚的
+正确分类的数量，公示如 所示
+\begin{equation}
+    Precision = \frac{TP}{TP + FP}
+\end{equation}
+召回率（Recall）: 针对样本而言的表示的是数据正样本中有多少被预测正
+确。这种度量反映了分类器检测网络攻击的能力，公示如 (5.3) 所示
+\begin{equation}
+    Recall = \frac{TP}{TP+ FN}
+\end{equation}
+$F1-score$：该度量精确度和召回率的调和平均值，是一种派生的有效的量，公
+示如  所示
+\begin{equation}
+    F1-score = 2*\frac{Precision * Recall}{Precision + Recall}
+\end{equation}

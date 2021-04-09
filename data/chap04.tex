@@ -362,11 +362,75 @@ $  state_t = 0
 \subsection{基于真实数据的检测结果}
 
 \chapter{流量检测系统的设计与实现}
+本文实现的流量异常检测系统按照功能需求可以分为三个模块：数据采集和分析模块，异常检测模块，终端预警模块。
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.6]{系统架构图.png}
+    % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
+    \caption{系统架构图}
+    \label{fig:arch}
+  \end{figure}
 
 \section{引言}
+下面是对各个模块的介绍：
 
-\section{使用大数据平台应对大规模流量的必要性}
+待补充。
 
-\section{基于流式处理的实时检测模块}
+% \section{使用大数据平台应对大规模流量的必要性}
+\section{spark 平台介绍}
+Spark 是 UC Berkeley AMP Lab 开源的通用分布式并行计算框架，目前已成为 Apache 软件基金会的顶级开源项目。Spark 支持多种编程语言，包括 Java、Python、R 和 Scala，同时 Spark 也支持 Hadoop 的底层存储系统 HDFS，但 Spark 不依赖 Hadoop。
 
-\section{系统效率分析}
+Spark 基于 Hadoop MapReduce 算法实现的分布式计算，拥有 Hadoop MapReduce 所具有的优点，并且具有更高的运算速度。Spark 能够比 Hadoop 运算更快，主要原因是：Hadoop 在一次 MapReduce 运算之后，会将数据的运算结果从内存写入到磁盘中，第二次 MapReduce 运算时在从磁盘中读取数据，两次对磁盘的操作，增加了多余的 IO 消耗；而 Spark 则是将数据一直缓存在内存中，运算时直接从内存读取数据，只有在必要时，才将部分数据写入到磁盘中。除此之外，Spark 使用最先进的 DAG（Directed Acyclic Graph,有向无环图）调度程序、查询优化器和物理执行引擎，在处理批量处理以及处理流数据时具有较高的性能。按照Spark 官网的说法，Spark 相对于 Hadoop 而言，Spark 能够达到 100 倍以上的运行负载。
+
+Spark Core是 Spark 的核心，主要负责任务调度等管理功能。Spark
+Core 的实现依赖于 RDDs（Resilient Distributed Datasets,
+弹性分布式数据集）的程序抽象概念。
+
+Spark Streaming：这个模块主要是对流数据的处理，支持流数据的可伸缩和容错处理，可以与 Flume（针对数据日志进行优化的一个系统）和 Kafka（针对分布式消息传递进行优化的流处理平台）等已建立的数据源集成。Spark Streaming 的实现，也使用 RDD 抽象的概念，使得在为流数据（如批量历史日志数据）编写应用程序时，能够更灵活，也更容易实现。
+
+Spark 有多种运行模式， Spark 支持本地运行模式（Local 模式）、独立运行模式（Standalone 模式）、Mesos、YARN（Yet Another Resource Negotiator）、Kubernetes 模式等。
+
+本地运行模式是 Spark 中最简单的一种模式，也可称作伪分布式模式。本文中的系统就是使用的本地运行模式。
+
+独立运行模式为 Spark 自带的一种集群管理模式，Mesos 及 YARN 两种模式也是比较常用的集群管理模式。相比较 Mesos 及 YARN 两种模式而言，独立运行模式是最简单，也最容易部署的一种集群运行模式。
+
+
+Spark 底层还支持多种数据源，能够从其它文件系统读取数据，如 HDFS、Amazon S3、Hypertable、HBase 等。Spark 对这些文件系统的支持，同时也丰富了整个 Spark 生态的运行环境。
+
+Spark 支持多种分布式部署模式，主要支持三种部署模式，分别是：Standalone、Spark on YARN和 Spark on Mesos模式。
+
+Standalone模式为 Spark 自带的一种集群管理模式，即独立模式，自带完整的服务，可单独部署到一个集群中，无需依赖任何其他资源管理系统。它是 Spark 实现的资源调度框架，其主要的节点有 Driver 节点、Master 节点和 Worker 节点。Standalone模式也是最简单最容易部署的一种模式。
+
+Spark on YARN模式，即 Spark 运行在Hadoop YARN框架之上的一种模式。Hadoop YARN（Yet Another Resource
+Negotiator，另一种资源协调者）是一种新的 Hadoop 资源管理器，它是一个通用资源管理系统，可为上层应用提供统一的资源管理和调度。
+
+Spark on Mesos模式，即 Spark 运行在Apache Mesos框架之上的一种模式。Apache Mesos是一个更强大的分布式资源管理框架，负责集群资源的分配，它允许多种不同的框架部署在其上，包括YARN。它被称为是分布式系统的内核。
+
+三种架构都采用了Master/Worker(Slave)的架构，Spark 分布式运行架构大致如下：
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.6]{spark分布式运行架构.jpg}
+    % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
+    \caption{spark分布式运行架构}
+    \label{fig:spark}
+  \end{figure}
+
+
+安装环境介绍（待补充）：
+本文将 Spark 部署在安装有 ubuntu16.04 系统的 VirtualBox 虚拟机中。
+
+搭建 Spark 集群，需要准备以下文件及环境：
+jdk-8u211-linux-x64.tar.gz
+spark-2.4.3-bin-hadoop2.7.tgz
+3 个独立的 ubuntu16.04 虚拟机系统，机器集群规划如下：
+
+
+
+\section{流式数据特征抽取}
+输入为kafka中的流量数据，提取的结果都是传输层的一些统计信息，以一个TCP流或一个UDP流为一个单位。TCP流以FIN标志为结束，UDP以设置的flowtimeout时间为限制，超过时间就判为结束。在一个TCP流中有很多个数据包，先三次握手而后传输信息再四次挥手。统计一个流中的统计信息作为提取的特征。且统计的特征都分前后向，规定由源地址到目的地址为正向，目的地址到源地址为反向，为每个流构建一个标志叫Flow ID:192.168.31.100-183.232.231.174-46927-443-6,由源地址、目的地址、协议号组成。
+\section{模型训练模块的设计与实现}
+补充一些图
+\section{预测输出模块}
+\section{系统结果展示与分析}
+
