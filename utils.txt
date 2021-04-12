@@ -8,3 +8,7 @@ http://www.atyun.com/30234.html  一份详细的LSTM和GRU图解
 
 对比了xxx模型，效果如何，
 第三章基本完成，但是还有很多公式需要打出来。
+
+bigan.net 
+paperyy
+paperpass
