@@ -1,4 +1,5 @@
 \chapter{流量检测系统的设计与实现}
+\section{引言}
 本文实现的流量异常检测系统按照功能需求可以分为三个模块：数据采集和分析模块，异常检测模块，终端预警模块。
 TODO: 图中加入关系矩阵
 \begin{figure}
@@ -9,32 +10,54 @@ TODO: 图中加入关系矩阵
     \label{fig:arch}
   \end{figure}
 
-\section{引言}
+
 下面是对各个模块的介绍：
 
 待补充。
 
 % \section{使用大数据平台应对大规模流量的必要性}
 \section{spark 平台介绍}
-Spark是UC Berkeley AMP Lab开源的通用分布式并行计算框架, 也已成为当下Apache软件基金会的顶级开源项目。Spark支持的编程语言有Java、Python、R和Scala数种，同时，Spark也支持Hadoop的底层存储系统HDFS。
+Apache Spark是由UC Berkeley AMP Lab开源的用于大规模数据处理的统一分析引擎\cite{spark}，现如今已经成为Apache软件基金会的顶级开源项目。Spark原理与Hadoop类似，都是基于MapReduce进行分布式计算，但是功能更加丰富，且支持SQL查询、流式处理、图计算等功能。
+% 它基于Hadoop MapReduce，并且扩展了MapReduce模型以有效地将其用于更多类型的计算，其中包括交互式查询和流处理。
+% Spark能比Hadoop运算更快的主要原因在于：Hadoop 在进行一次MapReduce 运算之后，会将数据的运算结果从内存写入到磁盘中，第二次MapReduce运算时再从磁盘中读取数据，通过两次对磁盘的操作，会增加多余的IO消耗；对比来看，Spark则是将数据一直缓存在内存中，运算时直接从内存读取数据，只有在必要时，才将部分数据写入到磁盘中。
+Spark具有以下几个特点：
 
-Spark以Hadoop MapReduce算法为基础，实现出分布式计算，它不仅拥有Hadoop MapReduce所具有的优点，而且具有更高的运算速度。Spark能比Hadoop运算更快的主要原因在于：Hadoop 在一次MapReduce 运算之后，会将数据的运算结果从内存写入到磁盘中，第二次MapReduce运算时再从磁盘中读取数据，通过两次对磁盘的操作，会增加多余的IO消耗；对比来看，Spark则是将数据一直缓存在内存中，运算时直接从内存读取数据，只有在必要时，才将部分数据写入到磁盘中。除此之外，Spark 使用最先进的 DAG（Directed Acyclic Graph,有向无环图）调度程序、查询优化器和物理执行引擎，在处理批量处理以及处理流数据时，具有较高的性能。根据Spark 官网的说法，相对于 Hadoop 而言，Spark 能够达到 100 倍以上的运行负载。
+\begin{itemize}
+  \item 速度快，Spark的速度比Hadoop要快100倍以上，图\ref{fig:Logistic regression in Hadoop and Spark}是一项逻辑回归任务在Hadoop和Spark两个系统的运行时长对比。这是因为Spark基于内存计算，而Hadoop MapReduce必须进行读取和写入磁盘，IO操作比内存操作更加耗时。
+  % 另外，Spark中引入
+  % 使用最先进的 DAG（Directed Acyclic Graph,有向无环图）调度程序、查询优化器和物理执行引擎，在处理批量处理以及处理流数据时，具有较高的性能。
+  \item 易用性。Spark提供了80余种高级API，可以轻松编写高度并行的应用程序。Spark支持Java, Scala, Python, R, and SQL等多种编程语言。
+  \item 兼容性。Spark可以运行在Hadoop模式、Mesos模式、Standalone独立模式或Cloud中，并且还可以访问各种数据源，包括本地文件系统、HDFS、Cassandra、HBase和Hive等。
+\end{itemize}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.3\linewidth]{logistic-regression.png}
+  \caption{Logistic regression in Hadoop and Spark}
+  \label{fig:Logistic regression in Hadoop and Spark}
+\end{figure}
 
 
+如图\ref{fig:Spark组件}所示，Spark项目包含多个独立组件。其最核心的模块为深蓝色的Spark Core，其定义了核心API，如弹性分布式数据集（Resilient Distributed Datasets，RDD），该模块也负责调度、监控计算集群中的计算任务，具有内存管理，故障恢复，与管理系统、存储系统交互等功能。为了满足分布式计算系统的可扩展性，Spark支持在各种集群管理器之上运行，例如图中灰色的模块Hadoop YARN，Apache Mesos以及浅蓝色的Spark自身的“独立调度程序”（Standalone Scheduler）。在Spark Core之上，具有四个组件：Spark SQL、Spark Streaming、MLlib、GraphX。本文中的系统主要使用Spark Streaming组件。
 
 
-Spark Core是 Spark 的核心，主要负责任务调度等管理功能。Spark
-Core 的实现依赖于 RDDs（Resilient Distributed Datasets,
-弹性分布式数据集）的程序抽象概念。
+% 从本质上讲，Spark是一个“计算引擎”，负责调度，分发和监视由跨许多工作机或计算集群的许多计算任务组成的应用程序。Spark Core包含Spark的基本功能，包括任务计划，内存管理，故障恢复，与存储系统交互等功能。 Spark Core中也定义了核心API，如弹性分布式数据集（Resilient Distributed Datasets，RDD）。 在后台，Spark需要从一个计算节点有效地扩展到成千上万个计算节点。 为了在实现最大灵活性的同时实现此目的，Spark支持在各种集群管理器之上运行，包括Hadoop YARN，Apache Mesos和Spark本身包含的称为“独立调度程序”（Standalone Scheduler）的简单集群管理器。 在Spark Core之上，具有四个组件：Spark SQL、Spark Streaming、MLlib、GraphX。本文中的系统主要使用Spark Streaming组件。
 
-Spark Streaming这个模块的作用主要是处理流数据，支持流数据的可伸缩和容错处理，可以与 Flume（针对数据日志进行优化的一个系统）和 Kafka（针对分布式消息传递进行优化的流处理平台）等已建立的数据源集成。Spark Streaming 的实现，也需要通过 RDD的抽象概念，使其在为流数据（如批量历史日志数据）编写应用程序时，能够更灵活，也更容易实现。
+\begin{figure}
+  \centering
+  \includegraphics[width=0.6\linewidth]{spark-stack.png}
+  \caption{Spark组件}
+  \label{fig:Spark组件}
+\end{figure}
+% Spark Core是 Spark 的核心，主要负责任务调度等管理功能。Spark
+% Core 的实现依赖于 RDDs（Resilient Distributed Datasets,
+% 弹性分布式数据集）的程序抽象概念。
 
-Spark 具有多种运行模式，包括本地运行模式（Local 模式）、独立运行模式（Standalone 模式）、Mesos、YARN（Yet Another Resource Negotiator）、Kubernetes 模式等。本地运行模式是 Spark 的众多模式中最简单的一种，也可称作伪分布式模式。本文实验中所使用的系统模式即为本地运行模式。至于独立运行模式，它是 Spark 自带的一种集群管理模式，而Mesos 及 YARN 两种模式也都是较常使用的集群管理模式。它们的差别是，独立运行模式相对于Mesos 及 YARN 两种集群运行模式而言，又更为简单，且容易部署。
+% Spark Streaming这个模块的作用主要是处理流数据，支持流数据的可伸缩和容错处理，可以与 Flume（针对数据日志进行优化的一个系统）和 Kafka（针对分布式消息传递进行优化的流处理平台）等已建立的数据源集成。Spark Streaming 的实现，也需要通过 RDD的抽象概念，使其在为流数据（如批量历史日志数据）编写应用程序时，能够更灵活，也更容易实现。
 
-此外需要介绍的是，Spark 底层还支持多种数据源，能够从其它文件系统读取数据，如 HDFS、Amazon S3和Hypertable、HBase 等。Spark 对这些文件系统的支持，当然也丰富了整个 Spark 生态的运行环境。
+% Spark 具有多种运行模式，包括本地运行模式（Local 模式）、独立运行模式（Standalone 模式）、Mesos、YARN（Yet Another Resource Negotiator）、Kubernetes 模式等。本地运行模式是 Spark 的众多模式中最简单的一种，也可称作伪分布式模式。本文实验中所使用的系统模式即为本地运行模式。至于独立运行模式，它是 Spark 自带的一种集群管理模式，而Mesos 及 YARN 两种模式也都是较常使用的集群管理模式。它们的差别是，独立运行模式相对于Mesos 及 YARN 两种集群运行模式而言，又更为简单，且容易部署。
 
 
-至于分布式部署模式，Spark 也有多种选择，而主要支持的三种部署模式分别是：Standalone、Spark on YARN和 Spark on Mesos模式。首先，Standalone模式为 Spark 自带的一种集群管理模式，即独立模式，自带完整的服务，可单独部署到一个集群中，无需依赖任何其他资源管理系统。我们知道,Standalone模式是最简易,同时也是最方便部署的一种模式。此模式是 Spark 实现的资源调度框架，其主要的节点包括有Driver 节点、Master 节点以及 Worker 节点。其次，Spark on YARN模式，是 Spark 运行在Hadoop YARN框架之上的一种模式。Hadoop YARN（Yet Another Resource Negotiator，另一种资源协调者）是一种新的 Hadoop 资源管理器，它是一个通用资源管理系统，可为上层应用提供统一的资源管理和调度。最后，Spark on Mesos模式，是 Spark 运行在Apache Mesos框架之上的一种模式。Apache Mesos是一个更强大的分布式资源管理框架，负责集群资源的分配，它允许多种不同的框架部署在其上，包括YARN。同时，它也被称为是分布式系统的内核。
+% 至于分布式部署模式，Spark 也有多种选择，而主要支持的三种部署模式分别是：Standalone、Spark on YARN和 Spark on Mesos模式。首先，Standalone模式为 Spark 自带的一种集群管理模式，即独立模式，自带完整的服务，可单独部署到一个集群中，无需依赖任何其他资源管理系统。我们知道,Standalone模式是最简易,同时也是最方便部署的一种模式。此模式是 Spark 实现的资源调度框架，其主要的节点包括有Driver 节点、Master 节点以及 Worker 节点。其次，Spark on YARN模式，是 Spark 运行在Hadoop YARN框架之上的一种模式。Hadoop YARN（Yet Another Resource Negotiator，另一种资源协调者）是一种新的 Hadoop 资源管理器，它是一个通用资源管理系统，可为上层应用提供统一的资源管理和调度。最后，Spark on Mesos模式，是 Spark 运行在Apache Mesos框架之上的一种模式。Apache Mesos是一个更强大的分布式资源管理框架，负责集群资源的分配，它允许多种不同的框架部署在其上，包括YARN。同时，它也被称为是分布式系统的内核。
 
 % Spark 底层还支持多种数据源，能够从其它文件系统读取数据，如 HDFS、Amazon S3、Hypertable、HBase 等。Spark 对这些文件系统的支持，同时也丰富了整个 Spark 生态的运行环境。
 
@@ -47,21 +70,19 @@ Spark 具有多种运行模式，包括本地运行模式（Local 模式）、�
 
 % Spark on Mesos模式，即 Spark 运行在Apache Mesos框架之上的一种模式。Apache Mesos是一个更强大的分布式资源管理框架，负责集群资源的分配，它允许多种不同的框架部署在其上，包括YARN。它被称为是分布式系统的内核。
 
-三种架构都采用了Master/Worker(Slave)的架构，Spark 分布式运行架构大致如下：
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.6]{spark分布式运行架构.jpg}
-    % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
-    \caption{spark分布式运行架构}
-    \label{fig:spark}
-  \end{figure}
+% 三种架构都采用了Master/Worker(Slave)的架构，Spark 分布式运行架构大致如下：
+% \begin{figure}
+%     \centering
+%     \includegraphics[scale=0.6]{spark分布式运行架构.jpg}
+%     % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
+%     \caption{spark分布式运行架构}
+%     \label{fig:spark}
+%   \end{figure}
 
 \section{系统整体设计}
-Spark Streaming是Spark Core为支持流式处理的扩展，具有高容错，高吞吐的特点。
-Spark Streaming在Spark Core的基础上继续实现StreamingContext（负责管理Spark Streaming程序运行的环境），JobSchedule（负责调度Job任务），JobGenerator（负责生成
-Job任务），Receiver（负责接收数据）组件。
+Spark Streaming是Spark Core为支持流式处理的扩展，具有高容错，高吞吐的特点。Spark Streaming在Spark Core的基础上继续实现StreamingContext（负责管理Spark Streaming程序运行的环境），JobScheduler（负责调度Job任务），JobGenerator（负责生成Job任务），Receiver（负责接收数据）组件。
 
-Spark Streaming内部的基本工作原理如下~\ref{fig:spark工作原理}，接收实时输入数据流，然后将数据拆分成多个batch，比如每收集1秒的数据封装为一个batch，然后将每个batch交给Spark的计算引擎进行处理，最后会生产出一个结果数据流，其中的数据，也是由一个一个的batch所组成的。
+Spark Streaming内部的基本工作原理如图~\ref{fig:spark工作原理}所示，接收实时输入数据流，然后将数据拆分成多个batch，比如每收集1秒的数据封装为一个batch，然后将每个batch交给Spark的计算引擎进行处理，最后会生产出一个结果数据流，其中的数据，也是由一个一个的batch所组成的。
 
 \begin{figure}
     \centering
