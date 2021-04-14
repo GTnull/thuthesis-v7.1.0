@@ -1,19 +1,20 @@
 % !TeX root = ../thuthesis-example.tex
 
-\chapter{基于特征关系图的RNN及其网络流量异常检测算法}
+\chapter{基于特征关系图的循环神经网络算法}
 \section{引言}
-从第三章的内容可以知道，现有的异常检测算法能够在公开数据集取得较为不错的表现，但是在真实数据集——清华大学校园网流量数据上效果均无法达到要求。这是因为相比于人工构造的公开数据集，清华大学校园网数据具有规模大、应用类型种类繁多、异常流量占比多、难以学到基线等特点。现有的算法无论是传统机器学习的LR、NB、DT，还是拟合能力更强大的深度学习模型CNN、LSTM、GRU，都有精确率低、误报率高的问题。本章将先从特征分析着手，引入特征之间的关系矩阵，将其加入到神经网络的训练中，从而获得更好的检测效果。
+从第三章的实验可以知道，现有的异常检测算法能够在公开数据集取得较为不错的表现，但是在真实数据集——清华大学校园网流量数据上效果均无法达到要求。这是因为相比于人工构造的公开数据集，清华大学校园网数据具有规模大、应用类型种类繁多、异常流量占比多、难以学到基线等特点。现有的算法无论是传统机器学习的LR、NB、DT，还是拟合能力更强大的深度学习模型CNN、LSTM、GRU，都有精确率低、误报率高的问题。本章将先从特征分析着手，引入特征之间的关系矩阵，将其加入到神经网络的训练中，从而获得更好的检测效果。
 \section{特征分析}
-流量特征可以视为反映当前网络流量的一组观察值，从多个角度描述当前的流量场景。好的特征能够真实地反映出流本身的状态信息。例如对于一条单个TCP流，这条流可能是一个正常的端到端的链接，也可能是分布式拒绝服务攻击的一部分，在被攻击者的视角内，它的入流量的带宽急剧增加，且远大于出流量的带宽。
+流量特征可以视为反映当前网络流量的一组观察值，从多个角度描述当前的流量场景。好的特征能够真实地反映出流本身的状态信息。例如对于一条单个TCP流，这条流可能是一个正常的端到端的链接，也可能是分布式拒绝服务攻击的一部分，在被攻击者的视角内，它的入流量的带宽急剧增加，且远大于出流量的带宽。图\ref{fig:特征关系}表示某一时刻下部分特征之间的关系，从中我们看出，发送方/接收方数据包长度大小与流的传输速率具有很强的关联性。
 
-% \begin{figure}
-%   \centering
-%   \includegraphics[scale=1]{特征关系.png}
-%   \caption{特征关系}
-%   \label{fig:特征关系}
-% \end{figure}
+\begin{figure}
+  \centering
+  \includegraphics[scale=1]{特征关系.png}
+  \caption{特征关系}
+  \label{fig:特征关系}
+\end{figure}
 
-本文中利用皮尔逊相关系数来计算流量特征之间的关系。皮尔逊相关的别名是积差相关（或者称之为积矩相关），命名来源是20 世纪英国的描述统计学派先驱皮尔逊。对于计算变量之间的线性相关性，他想到了一种方法，即假设当前存在两个变量X、Y，再通过下列公式计算X、Y之间的皮尔逊相关系数：
+为了在神经网络中引入特征关系矩阵，本文利用皮尔逊相关系数来计算流量特征之间的关系。皮尔逊相关的别名是积差相关（或者称之为积矩相关），命名来源是20 世纪英国的描述统计学派先驱皮尔逊。对于两个变量X、Y，它们之间的皮尔逊相关系数为：
+% 对于计算变量之间的线性相关性，他想到了一种方法，即假设当前存在两个变量X、Y，通过下列公式计算X、Y之间的皮尔逊相关系数：
 
 % 皮尔逊相关也称为积差相关（或积矩相关）是英国统计学家皮尔逊于20世纪提出的一种计算线性相关的方法。
 
@@ -21,19 +22,8 @@
 \begin{equation}
   \rho_{X,Y} = \frac{cov(X,Y)}{\rho_X\rho_Y}=\frac{E(XY)-E(X)E(Y)}{\sqrt{E(X^2)-E^2(X)}\sqrt{E(Y^2)-E^2(Y)}}
 \end{equation}
+其取值范围为[-1,1]，$\rho_{X,Y}=1$时，说明X和Y完全正相关，$\rho_{X,Y}=-1$时，说明X和Y完全负相关，$\rho_{X,Y}$接近0时，说明X和Y无线性相关性。
 
-\section{如何向RNN中加入特征图信息}
-在RNN的训练过程中，加入有效的额外辅助信息往往能够提升训练效果，例如在机器翻译领域，加入文章的关键词、摘要、作者信息等。通常加入信息的方式有以下几种。
-
-\begin{enumerate}
-  \item 直接将额外信息向量与当前特征向量叠加。原向量为$p=(p_1,p_2,...,p_n)$，额外信息向量为$e=(e_1,e_2,...,e_n)$，最终输入向量为$w=(p_1+e_1,p_2+e_2,...,p_n+e_n)$。这种方法需要保证额外信息向量与原向量维度相同。
-  \item 将额外信息向量与当前特征向量拼接。原向量为$p=(p_1,p_2,...,p_n)$，额外信息向量为$e=(e_1,e_2,...,e_m)$，最终输入向量为$w=(p_1,p_2,...,p_n,e_1,e_2,...,e_m)$。也就是增加输入的维度，缺点是通常要求额外信息的特征与原特征类型保持一致，例如均为词向量。
-  \item 增加一个额外的隐藏层，分别使用不同的矩阵进行变化，将结果用$tanh$函数映射到所需的维度。相当于增加一个普通循环神经网络模型和额外信息模型的感知器，然后加载到输出层上。即：
-  \begin{equation}
-    h'_t= tanh(W(p_t) + W(e) + b^{h'_t})
-  \end{equation}
-\end{enumerate}
-因此，本文采用第三种方式将额外的特征关系图信息与原有特征结合起来。
 % Recurrent network的应用主要如下两部分：
 
 % 文本相关。主要应用于自然语言处理（NLP）、对话系统、情感分析、机器翻译等等领域，Google翻译用的就是一个7-8层的LSTM模型。
@@ -54,11 +44,12 @@
 % 神经网络（Neural Network，NN），又称人工神经网络(Artificial Neural Network，ANN)，是20世纪80 年代以来人工智能领域兴起的研究热点。它的定义有很多，其中第一批神经计算机的发明者Robert Hecht-Nielsen博士对神经网络的定义是“ 一个由许多简单的，高度互连的处理元素组成的计算系统， 它们通过对外部输入的动态状态反应来处理信息。或者也可以认为人工神经网络是一种计算模型，它的灵感来自于人脑中生物神经网络处理信息的方式。”
 % 最近十多年来，针对人工神经网络的研究工作已经取得了重大进展，其在模式识别、自动控制、预测估计等领域已成功地解决了许多现代计算机难以解决的实际问题。
 
-\subsection{神经网络：修改标题}
-经过数十年的发展，神经网络有非常多的种类，按照网络中是否包含循环可以分为前馈神经网络和循环神经网络。
+\section{循环神经网络模型}
+经过数十年的发展，神经网络有非常多的种类，按照网络中是否包含循环可以将神经网络分为前馈神经网络和循环神经网络。
 \begin{enumerate}
-    \item 前馈神经网络：前馈神经网络是一种单元之间连接不形成循环的神经网络。在这种网络中，信息从输入到输出正向流动。前馈神经网络如果只有一层输入节点、一层输出节点，不包含隐藏层，那么被称为单层感知器（Single Layer Perceptron）。若网络由多层计算单元组成，以前馈方式相互连接，则被称为多层感知器（Multi Layer Perceptron）。此外还有一类前馈神经网络，卷积神经网络(CNN)。
-卷积神经网络与普通的神经网络非常相似，它们是由具有可学习权重和偏差的神经元组成的。在卷积神经网络（CNN，或ConvNet或移位不变或空间不变）中，单元连接模式的灵感来自于视觉皮层的组织，单元在一个被称为感受场的受限空间区域内对刺激做出反应。感受场部分重叠，覆盖了整个视场。单元响应可以用卷积运算在数学上近似。
+    \item 前馈神经网络：前馈神经网络是一种单元之间连接不形成循环的神经网络。在这种网络中，信息从输入到输出正向流动。前馈神经网络如果只有一层输入节点、一层输出节点，不包含隐藏层，那么被称为单层感知器（Single Layer Perceptron）。若网络由多层计算单元组成，以前馈方式相互连接，则被称为多层感知器（Multi Layer Perceptron）。
+%     此外还有一类前馈神经网络，卷积神经网络(CNN)。
+% 卷积神经网络与普通的神经网络非常相似，它们是由具有可学习权重和偏差的神经元组成的。在卷积神经网络（CNN，或ConvNet或移位不变或空间不变）中，单元连接模式的灵感来自于视觉皮层的组织，单元在一个被称为感受场的受限空间区域内对刺激做出反应。感受场部分重叠，覆盖了整个视场。单元响应可以用卷积运算在数学上近似。
 
 \item  循环神经网络
 在循环神经网络(RNN)中，单元之间的连接形成了一个定向循环(它们向前传播数据，同时也向后传播数据，从较后的处理阶段到较早的阶段)。这使得它能够表现出动态的时间行为。与前馈神经网络不同，RNNs可以利用其内部存储器处理任意输入序列。这使得它们适用于未分割、连接的手写识别、语音识别和其他一般序列处理器等任务。
@@ -109,7 +100,7 @@
     \item 输入节点（输入层）。在这一层中不进行任何计算，它们只是将信息传递给下一层（大部分时间是隐藏层）。
     \item 隐藏节点（隐藏层）。中间处理或计算在隐藏层中完成的，然后将输入层的权重（信号或信息）传递给下一层（另一个隐藏层或输出层）。一个神经网络也可以不包含隐藏层。
     \item 输出节点（输出层）。此层为神经网络的最末层，隐藏层所输入的信息或信号会被这一层接收。再通过激活函数，最终将得到合理范围内的理想数值，例如用于分类的softmax 函数。
-    \item 连接和权重。神经元之间会有边进行连接，每条边会有一定的权重。即每个连接将神经元$i$的输出传递给神经元$j$的输入,每个连接被赋予一个权重$W_{ij}$。
+    \item 连接和权重。神经元之间会有边进行连接，每条边会有一定的权重。即每个连接将神经元$i$的输出传递给神经元$j$的输入，每个连接被赋予一个权重$W_{ij}$。
     \item 激活函数。这个函数的作用在于将非线性特征引入到神经网络当中。同时它会将值的范围紧缩至更小，所以一个Sigmoid 激活函数的值区间为[0,1]。深度学习中有很多激活函数，如Sigmoid、Tanh、ReLU 、Softplus、Softmax 等。表\ref{table:激活函数}为常见的激活函数。
     \begin{table}[]
         \caption{激活函数}
@@ -148,7 +139,7 @@
     \caption{循环神经网络}
     \label{fig:循环神经网络}
   \end{figure}
-该图显示了一个循环神经网络被展开成一个完整的神经网络。例如，如果输入序列是一个由5个单词组成的句子，那么网络就会被展开成一个5层神经网络，每个单词一层。这个网络在t时刻接收到输入 $x_t$ 之后，隐藏层的值是 $s_t$ ，输出值是 $o_t$ 。关键一点是， $x_t$ 的值不仅仅取决于 $s_t$ ，还取决于 $s_{t-1}$ 。
+该图显示了一个循环神经网络被展开成一个完整的神经网络。例如，如果输入序列是时间窗口为T的一组向量，那么网络会被展开成T层的神经网络。这个网络在t时刻接收到输入 $x_t$ 之后，隐藏层的值是 $s_t$ ，输出值是 $o_t$ 。关键一点是， $x_t$ 的值不仅仅取决于 $s_t$ ，还取决于 $s_{t-1}$ 。
   用公式表示如下：
   \begin{equation}
       \begin{aligned}
@@ -157,12 +148,27 @@
       \end{aligned}
   \end{equation}
 
-  $x_t$表示第$t$步的输入，例如$x_1$表示时刻1的特征向量。$s_t$表示第t步隐藏层状态，也就是网络中的“记忆”。$s_t$是由前一层的隐藏层状态和当前层的输入计算得到。函数$f(\cdot)$通常是一个非线性函数，如tanh或者ReLU。
+  $x_t$表示第$t$步的输入，例如$x_1$表示时刻1的特征向量。$s_t$表示第t步隐藏层状态，也就是网络中的“记忆”。$s_t$是由前一层的隐藏层状态和当前层的输入向量计算得到。函数$f(\cdot)$通常是一个非线性函数，如tanh或者ReLU。
+
+RNN伪代码如算法\ref{RNN伪代码} 所示。
+  \begin{algorithm}[!h]
+    \caption{\emph{RNN伪代码}}
+    \label{RNN伪代码}
+    \begin{algorithmic}[1]
+      \Require t时刻的特征向量
+      \Ensure t+T时刻的特征向量
+      \State 初始化t时刻单元状态
+      \For{t $\leftarrow$ $1$ to $T$}
+        \State $output_t = activation(input_t, state_t)$
+        \State $state_t$ = $output_t$
+      \EndFor
+    \end{algorithmic}
+  \end{algorithm}
 
 \subsection{LSTM}
-普通RNN有不能处理长依赖的问题，因此Hochreiter提出了一种长短期记忆网络-LSTM，以及它的变种，它是一种特殊的RNN，适用于学习长期依赖。现在LSTM已经被广泛应用于各个领域。
+普通RNN有不能处理长依赖的问题，因此Hochreiter提出了一种长短期记忆网络-LSTM，LSTM是一种特殊的RNN，适用于学习长期依赖。现在LSTM已经被广泛应用于各个领域。LSTM和RNN类似，网络中都具有链式结构，但是LSTM中的循环单元与RNN中简单的$tanh$层不同，其构建了一些“门”（Gate）。利用构建出的“门”单元，能够让神经网络记住很久之前的重要信息或者忘记最近的不重要信息。
 
-所有RNN都具有链式形式。在普通的RNN中，这种循环是一种非常简单的结构，比如简单的tanh层。
+% 所有RNN都具有链式形式。在普通的RNN中，这种循环是一种非常简单的结构，比如简单的tanh层。
 \begin{figure}
     \centering
     \includegraphics[width=0.6\linewidth]{普通RNN结构.jpg}
@@ -177,7 +183,7 @@
     \caption{LSTM结构}
     \label{fig:LSTM结构}
   \end{figure}
-  LSTM 中的第一步是决定从单元状态中丢弃什么信息。通过加入一个称为忘记门的$\sigma$层完成。遗忘门会读取上一时刻的输出$h_{t-1}$和当前时刻的输入$x_t$，计算出一个维度为n的向量$f_t$，该向量的值均在$(0, 1)$之间。1 表示“完全保留”上个神经元的状态信息，0 表示“完全舍弃”。
+  LSTM 首先通过$\sigma$层的“忘记门”从单元状态中丢弃不重要的信息。遗忘门会读取上一时刻的输出$h_{t-1}$和当前时刻的输入$x_t$，计算出一个维度为n的向量$f_t$，该向量的值均在$(0, 1)$之间。1 表示“完全保留”上个神经元的状态信息，0 表示“完全舍弃”。
 
 \begin{equation}
     \begin{aligned}
@@ -205,8 +211,36 @@
     \end{aligned}
 \end{equation}
 
+
+\begin{algorithm}[!h]
+  \caption{\emph{LSTM伪代码}}
+  \begin{algorithmic}[1]
+      \Require 一组按时间排列的向量组
+      \Ensure 按时间排列的向量组
+      \State $\vec C_0 = \vec 0$
+      \State $\vec h_0 = \vec 0$
+      \For{$t$ \leftarrow $1$ to $T$}
+      \State $output_t = activation(dot(W, input_t) + dot(U, state_t) + b)$
+      \State $state_t = output_t$
+      \State $i_t = activation(dot(state_t,))$
+      % output_t = activation(dot(state_t, Uo) + dot(input_t, Wo) + dot(C_t, Vo) + bo)
+      % #输入门
+      % i_t = activation(dot(state_t, Ui) + dot(input_t, Wi) + bi)
+      % 遗忘门
+      % f_t = activation(dot(state_t, Uf) + dot(input_t, Wf) + bf)
+      % #候选记忆单元
+      % k_t = activation(dot(state_t, Uk) + dot(input_t, Wk) + bk)
+      
+      % c_t+1 = i_t * k_t + c_t * f_t
+
+      \EndFor
+  \end{algorithmic}
+\end{algorithm}
+
+
 \subsection{GRU}
-循环门单元（Gated Recurrent Unit，GRU），由 Cho, et al. (2014)提出。它组合了遗忘门和输入门到一个单独的“更新门”中。它也合并了cell state和hidden state，并且做了一些其他的改变。结果模型比标准LSTM模型更简单，
+门控循环单元（Gated Recurrent Unit，GRU）简化了LSTM模型，不仅合并了遗忘门和输入门，也合并了单元状态和隐藏层状态，在保证训练效果的同时大大减少了参数数量。
+% 循环门单元（Gated Recurrent Unit，GRU），由 Cho, et al. (2014)提出。它组合了遗忘门和输入门到一个单独的“更新门”中。它也合并了cell state和hidden state，并且做了一些其他的改变。结果模型比标准LSTM模型更简单，
 \begin{figure}
     \centering
     \includegraphics[width=0.6\linewidth]{GRU结构.png}
@@ -237,59 +271,44 @@
         h_t = (1- z_t) * h_{t-1} + z_t * \widetilde{h_t}
     \end{aligned}
 \end{equation}
-由图中结构可以看出，GRU是通过一个循环神经网络和“门”机制来不断更新内部参数，GRU算法的伪代码如下表所示。
+由图中结构可以看出，GRU是通过一个循环神经网络和“门”机制来不断更新内部参数。
+% GRU算法的伪代码如下表所示。\ref{alg}
 
-\begin{algorithm}[!h]
-    \caption{\emph{GRU}}
-    \label{alg}
-    \begin{algorithmic}[1]
-      \Require
-        t
+% \begin{algorithm}[!h]
+%     \caption{\emph{GRU}}
+%     \label{alg}
+%     \begin{algorithmic}[1]
+%       \Require
+%         t
 
-      \Ensure
-        内部参数
-      \State 初始化t时刻单元状态
-      \For{t $\leftarrow$ $1$ to $T$}
-        \State $output_t$ = t
-        \State $state_t$ = $output_t$
-      \EndFor
-    % %   \While {$\mathcal{L}$没有收敛}
-    %       \State 利用公式 计算每一个节点$v$的$q_\phi(\bm{y}_v | \bm{A}, \bm{X}, Y_L)$以及$h_v^{K-1}$
-    %       \For{i $\leftarrow$ $1$ to $m$}
-    %       \State 从分布$q_\phi(Y_U | \bm{A}, \bm{X}, Y_L)$中采样$Y_U$
-    %       \State 在采样得到的$Y_U$基础上，利用公式计算$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 
-    %        \For{j $\leftarrow$ $1$ to $n$}
-    %        \State 从分布$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 中采样$\bm{z}$
-    %        \State 在采样得到的$\bm{z}$基础上用公式 计算$p_{\theta}(\bm{y}_v|\bm{A}, \bm{X}, \bm{z})$
-    %        \EndFor
-    %       \EndFor
-    %       \State 用公式计算目标函数$\mathcal{L}(\theta, \phi)$ 
-    %       \State 用梯度下降法更新$q_{net1}$，$q_{net2}$和$p_{net}$的所有参数
-    %   \EndWhile
-      %\State \Return $P_{net}$
-    \end{algorithmic}
-  \end{algorithm}
+%       \Ensure
+%         内部参数
+%       \State 初始化t时刻单元状态
+%       \For{t $\leftarrow$ $1$ to $T$}
+%         \State $output_t$ = t
+%         \State $state_t$ = $output_t$
+%       \EndFor
+%     % %   \While {$\mathcal{L}$没有收敛}
+%     %       \State 利用公式 计算每一个节点$v$的$q_\phi(\bm{y}_v | \bm{A}, \bm{X}, Y_L)$以及$h_v^{K-1}$
+%     %       \For{i $\leftarrow$ $1$ to $m$}
+%     %       \State 从分布$q_\phi(Y_U | \bm{A}, \bm{X}, Y_L)$中采样$Y_U$
+%     %       \State 在采样得到的$Y_U$基础上，利用公式计算$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 
+%     %        \For{j $\leftarrow$ $1$ to $n$}
+%     %        \State 从分布$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 中采样$\bm{z}$
+%     %        \State 在采样得到的$\bm{z}$基础上用公式 计算$p_{\theta}(\bm{y}_v|\bm{A}, \bm{X}, \bm{z})$
+%     %        \EndFor
+%     %       \EndFor
+%     %       \State 用公式计算目标函数$\mathcal{L}(\theta, \phi)$ 
+%     %       \State 用梯度下降法更新$q_{net1}$，$q_{net2}$和$p_{net}$的所有参数
+%     %   \EndWhile
+%       %\State \Return $P_{net}$
+%     \end{algorithmic}
+%   \end{algorithm}
 
-\begin{algorithm}[!h]
-    \caption{\emph{LSTM层}}
-    \begin{algorithmic}[1]
-        \Require 一组按时间排列的向量组
-        \Ensure 按时间排列的向量组
-        \State $\vec C_0 = \vec 0$
-        \State $\vec h_0 = \vec 0$
-        \For{$t$ \leftarrow $1$ to $T$}
-        \State $output_t = activation(dot(W, input_t) + dot(U, state_t) + b)$
-        \State $state_t = output_t$
 
-        \EndFor
-    \end{algorithmic}
-\end{algorithm}
-  
-% $  state_t = 0
-%   for input_t in input_sequence:
-%     output_t = activation(dot(W, input_t) + dot(U, state_t) + b)
-%     state_t = output_t$
 \section{基于关系图结构的RNN}
+由前两节分析可知，LSTM和GRU作为两种循环神经网络，都可以很好地提取时序相关性。但是在复杂的清华大学校园网流量环境下，仍然有很多改进空间。根据第3章的实验结果，LSTM和GRU在CAMPUS数据集下准确率仅为65.4\%和67.8\%。经过特征分析，我们发现不同时刻下特征之间的相关性会发生变化，
+
 有向权重图$G=(V,E,W)$,$V$表示特征节点的集合，其中$|V|=N$, $E$表示特征间的关联关系，即图中的边，$W∈R[N*N]$为特征节点的相似度的加权邻接矩阵。将流量表示为G的一个图信号，P为每个节点特征数，则-时间t观察到的图信号。那么流量预测目的就是：给定G下，学得一个函数将T'个历史图信号映射到未来T时刻的图信号：
 \begin{equation}
     h[X^{t-T+1}, X^{t-T+2},...,X^{t}; G] \Rightarrow [X^{t+1}, X^{t+2}, ..., X^{t+T}]
@@ -323,7 +342,18 @@
 % \section{实验方案设计及实验流程}
 \begin{equation*} hl=[hl_{1},\ hl_{2},\ \ldots,\ hl_{n-f+1}] \tag{-} \end{equation*}
 
-% \section{特征关系图的生成}
+\section{如何向RNN中加入特征图信息}
+在RNN的训练过程中，加入有效的额外辅助信息往往能够提升训练效果，例如在机器翻译领域，加入文章的关键词、摘要、作者信息等。通常加入信息的方式有以下几种。
+
+\begin{enumerate}
+  \item 直接将额外信息向量与当前特征向量叠加。原向量为$p=(p_1,p_2,...,p_n)$，额外信息向量为$e=(e_1,e_2,...,e_n)$，最终输入向量为$w=(p_1+e_1,p_2+e_2,...,p_n+e_n)$。这种方法需要保证额外信息向量与原向量维度相同。
+  \item 将额外信息向量与当前特征向量拼接。原向量为$p=(p_1,p_2,...,p_n)$，额外信息向量为$e=(e_1,e_2,...,e_m)$，最终输入向量为$w=(p_1,p_2,...,p_n,e_1,e_2,...,e_m)$。也就是增加输入的维度，缺点是通常要求额外信息的特征与原特征类型保持一致，例如均为词向量。
+  \item 增加一个额外的隐藏层，分别使用不同的矩阵进行变化，将结果用$tanh$函数映射到所需的维度。相当于增加一个普通循环神经网络模型和额外信息模型的感知器，然后加载到输出层上。即：
+  \begin{equation}
+    h'_t= tanh(W(p_t) + W(e) + b^{h'_t})
+  \end{equation}
+\end{enumerate}
+因此，本文采用第三种方式将额外的特征关系图信息与原有特征结合起来。
 
 \section{算法性能评估}
 为了验证FG-RNN模型的有效性，本节首先在清华大学无线校园网真实场景下的数据集上开展有效性评估，随后在异常检测领域下的两个经典的公开数据集上进行实验，分别对比了FG-RNN和多个模型的评估效果，最后分析了模型参数的敏感性。
