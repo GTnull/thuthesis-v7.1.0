@@ -3,43 +3,44 @@
 % 中英文摘要和关键字
 
 \begin{abstract}
-现有问题：1.大多数现有算法基于开源数据集，很难应用到真实网络环境中；2.真实网络环境复杂，流量异常种类多，难以找到基线；
-本文主要工作如下：
-1.综述了
-2.提出了一种
-3.实现了系统，
+  现如今互联网已经成为最重要的信息化基础设施之一，智能运维作为新兴的网络管理技术倍受关注。 网络流量异常检测是智能运维的关键环节，从网络故障管理的角度来说，做好异常检测可以提前预测故障的发生；从性能管理的角度来说，可以发现性能不佳的区域，避免因误配置、架构不合理导致性能下降；从安全管理的角度来说，可以在网络攻击的前期阶段，及时发现并预警后续攻击，进而做出防御措施。然而，日益复杂的网络环境给异常检测算法带来了诸多问题和挑战。本文以校园网为例，进行网络流量异常检测算法和系统的研究。清华大学校园网是全球规模最大，架构最复杂，流量场景最多变的校园网之一，具有以下几个特点：（1）用户规模大，流量峰值高。每天有10万台设备活跃在线，同时在线设备最多为7万台，峰值流量约为30Gbps/s。（2）用户应用类型种类繁多。（3）异常流量是常态。扫描流量、攻击流量占比多。
 
-  论文的摘要是对论文研究内容和成果的高度概括。
-  摘要应对论文所研究的问题及其研究目的进行描述，对研究方法和过程进行简单介绍，对研究成果和所得结论进行概括。
-  摘要应具有独立性和自明性，其内容应包含与论文全文同等量的主要信息。
-  使读者即使不阅读全文，通过摘要就能了解论文的总体内容和主要成果。
+  为了解决上述问题和挑战，本文在清华大学校园网真实场景下展开研究，主要的研究内容和贡献如下：
+\begin{enumerate}
+  \item 本文设计了一种基于特征之间关系图的循环神经网络算法(FG-RNN)。原有的异常检测算法通常直接利用提取的特征进行训练，本文提出的FG-RNN算法有效利用了特征之间的相关性信息，将其加入到神经网络的训练过程中。经过在开源数据集、真实数据集下分别进行的实验验证，本文提出的算法检测结果优于现有的基于机器学习、深度学习的算法。
+  \item 本文对基于特征之间关系图的循环神经网络算法进行了流式改造，使之能够满足当前实时异常检测的需求。为了应对海量的校园网流量数据和高速数据流，本文设计了一个基于spark streaming的实时异常检测系统。该系统分为输入模块、模型模块、检测模块三部分，输入模块负责将流量数据进行窗口划分、特征选择、特征抽取、合并计算，得到的特征矩阵与预训练得到的关系矩阵一同送到模型中进行训练，模型中的参数每2小时更新一次，最后由检测模块对当前流量进行判别，并给出异常流量的类别。
+  \item 基于该实时异常检测系统，在大规模真实数据集上用多个不同的衡量指标对FG-RNN和现有神经网络算法进行实验对比，FG-RNN算法效果均优于其他算法。
+\end{enumerate}
+  
 
-  论文摘要的书写应力求精确、简明。
-  切忌写成对论文书写内容进行提要的形式，尤其要避免“第 1 章……；第 2 章……；……”这种或类似的陈述方式。
+% 现有问题：1.大多数现有算法基于开源数据集，很难应用到真实网络环境中；2.真实网络环境复杂，流量异常种类多，难以找到基线；
+% 本文主要工作如下：
+% 1.综述了
+% 2.提出了一种
+% 3.实现了系统，
 
-  关键词是为了文献标引工作、用以表示全文主要内容信息的单词或术语。
-  关键词不超过 5 个，每个关键词中间用分号分隔。
+
 
   % 关键词用“英文逗号”分隔，输出时会自动处理为正确的分隔符
   \thusetup{
-    keywords = {关键词 1, 关键词 2, 关键词 3, 关键词 4, 关键词 5},
+    keywords = {大规模校园网, 异常检测, 系统设计, 神经网络},
   }
 \end{abstract}
 
 \begin{abstract*}
-  An abstract of a dissertation is a summary and extraction of research work and contributions.
-  Included in an abstract should be description of research topic and research objective, brief introduction to methodology and research process, and summarization of conclusion and contributions of the research.
-  An abstract should be characterized by independence and clarity and carry identical information with the dissertation.
-  It should be such that the general idea and major contributions of the dissertation are conveyed without reading the dissertation.
+  Nowadays, the Internet has become one of the most important information infrastructure, as an emerging network management technology, AIOps has attracted much attention. Network traffic anomaly detection is a key component of AIOps. From the perspective of network fault management, good anomaly detection algorithm can predict the occurrence of faults in advance; from the perspective of performance management, poor performance areas can be found to avoid performance degradation due to misconfiguration and unreasonable architecture; from the perspective of security management, subsequent attacks can be detected and warned in the early stages of network attacks, and then defensive measures can be taken. However, the increasingly complex network environment brings many problems and challenges to the anomaly detection algorithm. In this paper, we take the campus network as an example to conduct research on network traffic anomaly detection algorithms and systems. Tsinghua University campus network is one of the largest, most complex, and most variable campus networks in the world, with the following characteristics: (1) large user scale and high traffic peak. There are 100,000 devices active online every day, with up to 70,000 devices online at the same time, and the peak traffic is about 30Gbps/s. (2) A wide variety of user application types. (3) Abnormal traffic is the norm. Scan traffic and attack traffic account for a large percentage.
 
-  An abstract should be concise and to the point.
-  It is a misunderstanding to make an abstract an outline of the dissertation and words “the first chapter”, “the second chapter” and the like should be avoided in the abstract.
+  In order to solve the above problems and challenges, this paper conducts research in a real scenario of Tsinghua University campus network, and the main research contents and contributions are as follows.
+  \begin{enumerate}
+    \item In this paper, a recurrent neural network algorithm (FG-RNN) based on the relationship graph between features is designed. While the original anomaly detection algorithm is usually trained directly using the extracted features, the FG-RNN algorithm proposed in this paper effectively utilizes the correlation information between features and adds it to the training process of the neural network. After experimental validation under open source datasets and real datasets respectively, the detection results of the algorithm proposed in this paper outperform the existing machine learning and deep learning based algorithms.
+    \item In this paper, the FG-RNN algorithm based is streamed and modified so that it can meet the current demand of real-time anomaly detection. In order to cope with the massive campus network traffic data and high-speed data streams, this paper designs a real-time anomaly detection system based on spark streaming. The system is divided into three parts: input module, model module, and detection module. The input module is responsible for dividing the traffic data into windows, feature selection, feature extraction, and merging calculation, and the obtained feature matrix is sent to the model for training together with the relationship matrix obtained from pre-training, and the parameters in the model are updated every 2 hours. Finally, the detection module discriminates the current traffic and gives the category of abnormal traffic.
+    \item Based on this real-time anomaly detection system, FG-RNN and existing neural network algorithms are experimentally compared on a large-scale real data set using several different measures, and both FG-RNN algorithms outperform other algorithms.
+  \end{enumerate}
 
-  Keywords are terms used in a dissertation for indexing, reflecting core information of the dissertation.
-  An abstract may contain a maximum of 5 keywords, with semi-colons used in between to separate one another.
+
 
   % Use comma as seperator when inputting
   \thusetup{
-    keywords* = {keyword 1, keyword 2, keyword 3, keyword 4, keyword 5},
+    keywords* = {Large-scale Campus Network, Anomaly Detection, System Design, Neural Network},
   }
 \end{abstract*}

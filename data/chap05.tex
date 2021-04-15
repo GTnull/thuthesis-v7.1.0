@@ -48,7 +48,14 @@ Spark具有以下几个特点：
   \label{fig:Spark组件}
 \end{figure}
 
-
+图\ref{fig:spark工作原理}是
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.6]{spark工作原理.png}
+  % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
+  \caption{spark streaming工作原理}
+  \label{fig:spark工作原理}
+\end{figure}
 
 \section{系统架构与实现}
 本文实现流量异常检测系统的架构如图\ref{fig:arch}所示，整个架构是基于Spark Streaming实现。本节将分模块具体介绍。
@@ -66,6 +73,15 @@ Spark具有以下几个特点：
 
 本模块提取的结果是以一条TCP流或者UDP流为单位，该条流中全部报文的统计信息。在一条流中有很多个数据包，TCP流以三次握手为开始，以FIN标志为结束；UDP流以首次出现为开始，以超出超时时间为结束。并且每条流都是双向流，由源ip地址到目的ip地址为正向，目的ip地址到源ip地址为反向。
 
+使用该方法得到的csv文件如图\ref{fig:特征文件}所示：
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.2]{特征文件.png}
+    \caption{特征文件}
+    \label{fig:特征文件}
+  \end{figure}
+
+
 \subsection{检测模块}
 检测模块分为离线和在线两部分，并且由于第四章中FG-RNN算法的特点，特征关系图（Feature Graph）的更新频率与循环神经网络（RNN）不同，并且这两者在实现中已经解耦，因此RNN的参数更新仅需在离线部分完成，在线部分可以兼顾实时流量的检测和特征关系图参数的更新。
 
@@ -74,13 +90,7 @@ Spark具有以下几个特点：
 
 因此，我们需要对异常的重要等级进行评分，具体地评分规则如下：首先初始化每种异常类型的基础分数，将异常分为低危、中危、高危三类，然后每次运维人员处理一条异常流后，将发现该流异常到处理异常的时间差作为权重，重新计算该异常的评分。
 
-% \begin{figure}
-%     \centering
-%     \includegraphics[scale=0.6]{spark工作原理.png}
-%     % \includegraphics[width=0.6\linewidth]{wireshark流量图.png}
-%     \caption{spark工作原理}
-%     \label{fig:spark工作原理}
-%   \end{figure}
+
 
 % \begin{figure}
 %     \centering
@@ -104,13 +114,7 @@ Spark具有以下几个特点：
 
 % 在currentFlows存储当前还未结束的所有TCP、UDP流。在添加的过程中不断地更新每个流的统计特征，最终将统计特征写入csv文件。判断新加入的数据包是否属于当前所有未结束的流，如果属于当前流则判断正向还是反向，之后判断时间是否超时、不超时则判断是否含有FIN标志，如果两者都不满足，则声明一个BasicFlow对象，根据id从currentFlows中拿到与当前数据包对应的流，调用addPacket将该数据包加入到对应流中。如果前面判断不在当前所有未结束的流中，则直接创建一个新的流，里面只含当前数据包，存入到currentFlows中。如果属于当前某个未结束的流，且超时或存在FIN标志，则说明当前flow结束，超时则从currentFlows中移除对应流，新建flow存入currentFlows中，含FIN标志则直接从currentFlows中移除对应流。结束的flow直接调用onFlowGenerated函数将流打印存储起来。
 
-% 使用该方法得到的csv文件如下所示：
-% \begin{figure}
-%     \centering
-%     \includegraphics[scale=0.2]{特征文件.png}
-%     \caption{特征文件}
-%     \label{fig:特征文件}
-%   \end{figure}
+
 
 
 % \section{模型训练模块的设计与实现}
@@ -123,3 +127,5 @@ Spark具有以下几个特点：
 % \end{figure}
 % \section{预测输出模块}
 \section{系统结果展示与分析}
+本节的目标是建立一个实时、高效、鲁棒、可扩展的流量异常检测系统，因此实验评估需要针对大规模流量场景，尽可能达到压力测试的效果。
+本节使用了第3章中CAMPUS数据集的第二段持续时长为18小时的数据作为系统的输入，经过测试，我们发现平均延迟3分钟即可将每个数据包的特征提取到相应的TCP/UDP流中，得到流的特征信息后，实时检测模块可以在1秒内输出异常类型。这得益于离线模型的定期更新。此外，我们还分析了该模型的失效时间，每次更新完一次模型的参数，可以看到随着时间的增长，模型效果越来越差，在5小时后准确率会低于78\%。
