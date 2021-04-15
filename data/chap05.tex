@@ -19,7 +19,7 @@
 
 
 \section{spark 平台介绍}
-Apache Spark是由UC Berkeley AMP Lab开源的用于大规模数据处理的统一分析引擎\cite{spark}，现如今已经成为Apache软件基金会的顶级开源项目。Spark原理与Hadoop类似，都是基于MapReduce进行分布式计算，但是功能更加丰富，且支持SQL查询、流式处理、图计算等功能。
+Apache Spark是由UC Berkeley AMP Lab开源的用于大规模数据处理的统一分析引擎\cite{spark}，现如今已经成为Apache软件基金会的最为出名的开源项目之一。Spark原理与Hadoop类似，都是基于MapReduce进行分布式计算，但是功能更加丰富，且支持SQL查询、流式处理、图计算等功能。
 
 Spark具有以下几个特点：
 
@@ -32,12 +32,12 @@ Spark具有以下几个特点：
     \label{fig:Logistic regression in Hadoop and Spark}
   \end{figure}
   \item 易用性。Spark提供了80余种高级API，可以轻松编写高度并行的应用程序。Spark支持Java, Scala, Python, R, and SQL等多种编程语言。
-  \item 兼容性。Spark可以兼容多种数据源，例如本地文件系统、HDFS、HBase等，并且Spark支持多种运行模式，能够做到类似java的“一次编写，多处运行”。
+  \item 兼容性。Spark支持多种数据源作为输入，例如本地文件系统、HDFS、HBase等，并且Spark支持多种运行模式，能够做到类似java的“一次编写，多处运行”。
 \end{itemize}
 
 
 
-如图\ref{fig:Spark组件}所示，Spark项目包含多个独立组件。其最核心的模块为深蓝色的Spark Core，其定义了核心API，如“弹性分布式数据集”，该模块也负责调度、监控计算集群中的计算任务，具有内存管理，故障恢复，与管理系统、存储系统交互等功能。为了满足分布式计算系统的可扩展性，Spark支持在各种集群管理器之上运行，例如图中灰色的模块Hadoop YARN，Apache Mesos以及浅蓝色的Spark自身的“独立调度程序”（Standalone Scheduler）。在Spark Core之上，具有浅蓝色的四个组件：Spark SQL（处理结构化数据），Spark Streaming（实时处理海量数据），MLlib（运行机器学习模型），GraphX（提供图计算）。本文中的系统主要使用Spark Streaming组件。
+如图\ref{fig:Spark组件}所示，Spark项目包含多个独立组件。其最核心的模块为深蓝色的Spark Core，其定义了核心API，如“弹性分布式数据集”，该模块也负责调度、监控计算集群中的计算任务，具有内存管理，故障恢复，与管理系统、存储系统交互等功能。为了满足分布式计算系统的可扩展性，Spark支持在各种集群管理器之上运行，例如图中灰色的模块Hadoop YARN，Apache Mesos以及浅蓝色的Spark系统中包含的“独立调度程序”（Standalone Scheduler）。在Spark Core之上，具有浅蓝色的四个组件：Spark SQL（处理结构化数据），Spark Streaming（实时处理海量数据），MLlib（运行机器学习模型），GraphX（提供图计算）。本文中的系统主要使用Spark Streaming组件。
 
 
 
@@ -62,7 +62,7 @@ Spark具有以下几个特点：
 \subsection{输入模块}
 输入模块的主要功能是对流式数据进行特征抽取，与第三章中的特征提取单一文件不同的是，本模块处理的数据是“无界”的。我们需要将无界数据进行切片，每次处理一个片段内的数据。这些片段又被称为“window”，window是流式计算领域的核心概念。
 
-本模块的输入为由kafka传入的流量数据，然后将流量报文划分到一个个滑动窗口（sliding window）中，每次处理一个窗口内的全部报文。流量特征提取的整体流程图\ref{fig:特征提取}所示。读取到packet后，首先为每条报文建立一个由源ip地址、目的ip地址、源端口、目的端口、协议号组成的标志，然后根据一系列规则判断该报文是否是一条新的流的起始报文、是否是当前流的结束报文、是否需要调用updateflow更新各项统计信息。
+本模块的输入为由kafka传入的流量数据，然后将流量报文划分到一个个滑动窗口（sliding window）中，每次处理一个窗口内的全部报文。流量特征提取的整体流程图\ref{fig:特征提取}所示。读取到packet后，首先为每条报文建立一个由五元组信息组成的标志，然后根据图中的规则依次判断该报文是否是一条新的流的起始报文、是否是当前流的结束报文、是否需要调用updateflow更新各项统计信息。
 
 \begin{figure}
   \centering
@@ -71,7 +71,7 @@ Spark具有以下几个特点：
   \label{fig:特征提取}
 \end{figure}
 
-本模块提取的结果是以一条TCP流或者UDP流为单位，该条流中全部报文的统计信息。在一条流中有很多个数据包，TCP流以三次握手为开始，以FIN标志为结束；UDP流以首次出现为开始，以超出超时时间为结束。并且每条流都是双向流，由源ip地址到目的ip地址为正向，目的ip地址到源ip地址为反向。
+本模块提取的结果是以一条TCP流或者UDP流为单位，该条流中全部报文的统计信息。在一条流中有很多个数据包，TCP流以三次握手为开始，以FIN标志为结束；UDP流以首次出现为开始，以超出超时时间为结束。并且每条流都是双向数据流，由源ip地址到目的ip地址为正向，目的ip地址到源ip地址为反向。
 
 使用该方法得到的csv文件如图\ref{fig:特征文件}所示：
 \begin{figure}
