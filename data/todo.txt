@@ -1,0 +1,36 @@
+1. 摘要不要写的太详细，讲清楚背景和自己的工作
+2. 多加一个章节，把系统应用加入进去
+3. 每章都要有小节
+4. 解释清楚为什么需要引入关系矩阵，为什么RNN没有从数据中学习到特征关系
+5. 后几章不能多介绍背景，要多写自己的工作
+6. 每张图都要自己画
+7. 增加对特征的分析，对模型的分析
+8. 设计要有架构图，实现要有代码。 加入 系统应用实例，
+9. 流量异常检测算法综述 ，数据集分析和对比，放到第二章里面，系统设计和实现分开，三个贡献点：算法设计，不要在介绍RNN，改掉如何向RNN中加入图信息标题，什么算法性能评估，算法伪代码，
+10. 从中可以看出，远控木马、暴力猜解、后门程序为主要的攻击手段。（不要放这句话）
+11. 系统设计：可扩展性改为模块化，模型模块改为识别模块、检测模块
+12. 未来展望：写实验中遇到的问题，这个才是未来展望
+---
+摘要：先说本领域很重要，然后说过去工作有哪些不足，接下来说本文在此基础上做了以下几点工作。
+
+UNSW-NB15:
+Normal\2218761
+Fuzzers\24246
+Analysis\2677
+Backdoors\2329
+DoS\16353
+Exploits\44525
+Generic\215481
+Reconnaissance\13987
+Shellcode\1511
+Worms\174
+
+CICIDS:
+Benign \t 529918 \t 0.0
+BruteForece,SFTP and SSH \t 445909 \t 0.0310
+slowloris, Slowhttptest, Hulk, GoldenEye Dos, Hearbleed Attacks \t 692703 \t 0.3648
+Web BruteForece, XSS, Sql Inject \t 458968 \t 0.0128
+Infiltration Dropbox download, Cool Disk \t 288602 \t 0.000125
+Botnet ARES \t 191033 \t 0.0103
+DDoS LOIT \t 225745 \t 0.5671
+PortScan \t 286467 \t 0.5548
