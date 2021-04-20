@@ -9,6 +9,8 @@ http://www.atyun.com/30234.html  一份详细的LSTM和GRU图解
 对比了xxx模型，效果如何，
 第三章基本完成，但是还有很多公式需要打出来。
 
+Shapley值 https://www.leiphone.com/category/ai/6mCCOMPuEXDym6nj.html
+
 bigan.net 
 paperyy
 paperpass
