@@ -34,7 +34,14 @@ SHAP特征重要度的原理是Shapley绝对值越大，其对应的特征越重
 \begin{equation}
   I_j = \sum_{i=1}^n |\phi_j^{(i)}|
 \end{equation}
-接下来我们对每个特征重要度降序排序并且进行绘制，结果如图所示。
+接下来我们对每个特征重要度降序排序并且进行绘制，结果如图所示。从中可以看出，排名前列的特征更多是与报文大小相关的特征和报文发送时间相关的特征。通过协议分析得到的特征的重要性相对更弱。
+
+% \begin{figure}
+%   \centering
+%   \includegraphics[scale=0.1]{mean-sharp-value.bmp}
+%   \caption{shap-importance}
+%   \label{fig:shap-importance}
+% \end{figure}
 
 \begin{figure}
   \centering
@@ -80,44 +87,16 @@ SHAP依赖图刻画了全部实例的某个特征值和Shapley值之间的关联
 \end{equation}
 其取值范围为[-1,1]，$\rho_{X,Y}=1$时，说明X和Y完全正相关，$\rho_{X,Y}=-1$时，说明X和Y完全负相关，$\rho_{X,Y}$接近0时，说明X和Y无线性相关性。
 
-% Recurrent network的应用主要如下两部分：
-
-% 文本相关。主要应用于自然语言处理（NLP）、对话系统、情感分析、机器翻译等等领域，Google翻译用的就是一个7-8层的LSTM模型。
-% 时序相关。就是时序预测问题（timeseries），诸如预测天气、温度、包括个人认为根本不可行的但是很多人依旧在做的预测股票价格问题
-% 这些问题都有一个共同点，就是有先后顺序的概念的。举个例子： 根据前5天每个小时的温度，来预测接下来1个小时的温度。典型的时序问题，温度是从5天前，一小时一小时的记录到现在的，它们的顺序不能改变，否则含义就发生了变化；再比如情感分析中，判断一个人写的一篇文章或者说的一句话，它是积极地（positive），还是消极的（negative），这个人说的话写的文章，里面每个字都是有顺序的，不能随意改变，否则含义就不同了。
-
-% 全连接网络Fully-Connected Network，或者卷积神经网络Convnet，他们在处理一个sequence（比如一个人写的一条影评），或者一个timeseries of data points（比如连续1个月记录的温度）的时候，他们缺乏记忆。一条影评里的每一个字经过word embedding后，被当成了一个独立的个体输入到网络中；网络不清楚之前的，或者之后的文字是什么。这样的网络，我们称为feedforward network。
-
-% 但是实际情况，我们理解一段文字的信息的时候，每个文字并不是独立的，我们的脑海里也有它的上下文。比如当你看到这段文字的时候，你还记得这篇文章开头表达过一些关于LSTM的信息；
-
-% 所以，我们在脑海里维护一些信息，这些信息随着我们的阅读不断的更新，帮助我们来理解我们所看到的每一个字，每一句话。这就是RNN的做法：维护一些中间状态信息。
-% \section{网络流量的时空特性}
-
-% \section{基于图结构的RNN原理}
-% 神经网络是目前计算机科学最流行的算法之一，它在图像识别、语音识别和自然语言处理等领域取得了重大突破。卷积神经网络、循环神经网络。
-% \section{神经网络}
-
-% 神经网络（Neural Network，NN），又称人工神经网络(Artificial Neural Network，ANN)，是20世纪80 年代以来人工智能领域兴起的研究热点。它的定义有很多，其中第一批神经计算机的发明者Robert Hecht-Nielsen博士对神经网络的定义是“ 一个由许多简单的，高度互连的处理元素组成的计算系统， 它们通过对外部输入的动态状态反应来处理信息。或者也可以认为人工神经网络是一种计算模型，它的灵感来自于人脑中生物神经网络处理信息的方式。”
-% 最近十多年来，针对人工神经网络的研究工作已经取得了重大进展，其在模式识别、自动控制、预测估计等领域已成功地解决了许多现代计算机难以解决的实际问题。
 
 \section{循环神经网络模型}
 经过数十年的发展，神经网络有非常多的种类，按照网络中是否包含循环可以将神经网络分为前馈神经网络和循环神经网络。
 \begin{enumerate}
     \item 前馈神经网络：前馈神经网络是一种单元之间连接不形成循环的神经网络。在这种网络中，信息从输入到输出正向流动。前馈神经网络如果只有一层输入节点、一层输出节点，不包含隐藏层，那么被称为单层感知器（Single Layer Perceptron）。若网络由多层计算单元组成，以前馈方式相互连接，则被称为多层感知器（Multi Layer Perceptron）。
-%     此外还有一类前馈神经网络，卷积神经网络(CNN)。
-% 卷积神经网络与普通的神经网络非常相似，它们是由具有可学习权重和偏差的神经元组成的。在卷积神经网络（CNN，或ConvNet或移位不变或空间不变）中，单元连接模式的灵感来自于视觉皮层的组织，单元在一个被称为感受场的受限空间区域内对刺激做出反应。感受场部分重叠，覆盖了整个视场。单元响应可以用卷积运算在数学上近似。
+
 
 \item  循环神经网络
 在循环神经网络(RNN)中，单元之间的连接形成了一个定向循环(它们向前传播数据，同时也向后传播数据，从较后的处理阶段到较早的阶段)。这使得它能够表现出动态的时间行为。与前馈神经网络不同，RNNs可以利用其内部存储器处理任意输入序列。这使得它们适用于未分割、连接的手写识别、语音识别和其他一般序列处理器等任务。
 \end{enumerate}
-
-
-% 神经网络的灵感来自于人脑生物神经网络的处理方式。
-% 大脑的基本计算单位是神经元。在人类的神经系统中，大约有860亿个神经元，它们与大约$10^{14}$-$10^{15}$的突触相连。神经网络的基本计算单位也是神经元，通常称为节点或单位。它从其他一些节点或外部源接收输入，并计算输出。每个输入都有一个相关的权重(w)，该权重是根据其对其他输入的相对重要性分配的。节点对其输入的加权和应用一个函数。
-% 其想法是，突触强度（权重w）是可学习的，并控制影响的强度及其方向：一个神经元对另一个神经元的兴奋性（正权重）或抑制性（负权重）
-% 。在基本模型中，树突将信号传到细胞体，在那里它们都会被相加。如果最后的总和超过了某个阈值，神经元就可以开火，沿着轴突发出一个尖峰。在计算模型中，我们假设尖峰的精确时序并不重要，只有发射的频率能传递信息。我们用激活函数（e.x sigmoid函数）来模拟神经元的发射率，它代表沿轴突的尖峰频率。
-% 开火 TODO
-% 从上面的解释我们可以得出结论，神经网络是由神经元组成的，生物学上神经元是通过突触连接的，信息在突触中流动（出计算模型的权重），当我们训练一个神经网络时，我们希望神经元每当从数据中学习到特定的模式时就开火，我们用激活函数来模拟开火率。
 
 假设一个神经元接收$𝐷$ 个输入$x_1,x_2,...,x_D$令向量$x=[x_1;x_2;...;x_D]$来
 表示这组输入， 净输入也叫净活性值
@@ -180,14 +159,7 @@ SHAP依赖图刻画了全部实例的某个特征值和Shapley值之间的关联
 \end{itemize}
 
 \subsection{RNN}
-% RNN是一种针对时序数据处理的神经网络模型。相较于普通的神经网络模型来说，更擅长处理序列数据，即该网络其具有短期记忆能力。在循环神经网络中，神经元不但可以接受其他神经元的信息，也可以接受自身的信息，形成具有环路的网络结构。
 
-% 循环神经网络的通用近似定理[Haykin, 2009]： 如果一个完全
-% 连接的循环神经网络有足够数量的sigmoid 型隐藏神经元，它可以以任意
-% 的准确率去近似任何一个非线性动力系统
-
-% 神经网络有很多类型，这里本文将神经网络划分为前馈神经网络和循环神经网络，其中前馈神经网络包含单层感知机、多层感知机（MLP）、卷积神经网络（CNN）等。
-% 本文主要介绍循环神经网络， 循环神经网络（Recurrent Neural Network，RNN）是一类具有短期记忆能力的神经网络。．和前馈神经网络相比，循环神经网络更加符合生物神经网络的结构。
 下图~\ref{fig:循环神经网络}是循环神经网络的示意图。
 \begin{figure}
     \centering
@@ -329,38 +301,7 @@ RNN伪代码如算法\ref{RNN伪代码} 所示。
     \end{aligned}
 \end{equation}
 由图中结构可以看出，GRU是通过一个循环神经网络和“门”机制来不断更新内部参数。
-% GRU算法的伪代码如下表所示。\ref{alg}
 
-% \begin{algorithm}[!h]
-%     \caption{\emph{GRU}}
-%     \label{alg}
-%     \begin{algorithmic}[1]
-%       \Require
-%         t
-
-%       \Ensure
-%         内部参数
-%       \State 初始化t时刻单元状态
-%       \For{t $\leftarrow$ $1$ to $T$}
-%         \State $output_t$ = t
-%         \State $state_t$ = $output_t$
-%       \EndFor
-%     % %   \While {$\mathcal{L}$没有收敛}
-%     %       \State 利用公式 计算每一个节点$v$的$q_\phi(\bm{y}_v | \bm{A}, \bm{X}, Y_L)$以及$h_v^{K-1}$
-%     %       \For{i $\leftarrow$ $1$ to $m$}
-%     %       \State 从分布$q_\phi(Y_U | \bm{A}, \bm{X}, Y_L)$中采样$Y_U$
-%     %       \State 在采样得到的$Y_U$基础上，利用公式计算$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 
-%     %        \For{j $\leftarrow$ $1$ to $n$}
-%     %        \State 从分布$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 中采样$\bm{z}$
-%     %        \State 在采样得到的$\bm{z}$基础上用公式 计算$p_{\theta}(\bm{y}_v|\bm{A}, \bm{X}, \bm{z})$
-%     %        \EndFor
-%     %       \EndFor
-%     %       \State 用公式计算目标函数$\mathcal{L}(\theta, \phi)$ 
-%     %       \State 用梯度下降法更新$q_{net1}$，$q_{net2}$和$p_{net}$的所有参数
-%     %   \EndWhile
-%       %\State \Return $P_{net}$
-%     \end{algorithmic}
-%   \end{algorithm}
 
 
 \section{基于关系图结构的RNN}
@@ -440,7 +381,14 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。
 \end{enumerate}
 因此，本文采用第三种方式将额外的特征关系图信息与原有特征结合起来。
 
-\section{算法性能评估}
+\section{实验评估}
+为了验证本文提出的FG-RNN模型的性能，本文分别在UNSW-NB15、CICIDS2017、CAMPUS三个数据集上，从多个评价维度对FG-RNN进行了实验评估，并与LSTM模型进行了对比。
+% \subsection{评估数据集}
+\subsection{模型训练}
+首先，将数据集按照70\%、15\%、15\%的比例分为训练集、验证集和测试集，分别用于训练模型、调整模型超参数和测试模型。模型的损失函数为交叉熵损失函数，其公式为：
+\begin{equation}
+  a = \frac{b}{c}
+\end{equation}
 \subsection{模型稳定性分析}
 对于本文提出的FG-RNN模型和所有基准模型，我们分别进行了多次实验。
 
@@ -470,63 +418,8 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。
 
 根据第3章的实验结果，LSTM和GRU在CAMPUS数据集下准确率仅为65.4\%和67.8\%，而加入固定的特征关系图后，LSTM准确率即可达到81.2\%，将特征关系图与RNN同时训练，动态更新特征关系矩阵的参数，则FG-RNN算法的准确率可达到85.3\%。
 
-% \begin{algorithm}
-%     \caption{A}
-%     \label{alg:A}
-%     % \begin{algorithmic}
-%     \STATE {set $r(t)=x(t)$} 
-%     \REPEAT 
-%     \STATE set $h(t)=r(t)$ 
-%     \REPEAT
-%     \STATE set $h(t)=r(t)$ 
-%     \UNTIL{B} 
-%     \UNTIL{B}
-%     % \end{algorithmic}
-%     \end{algorithm}
 
 
-
-
-
-%   \begin{algorithm}[!h]
-%     \caption{\emph{GSNN}}
-%     \label{alg}
-%     \begin{algorithmic}[1]
-%       \Require
-%         图$G$以及它的邻接矩阵$A$，节点特征矩阵$X$以及已知节点的标签信息$T_L$，采样得到的$Y_U$和$\bm{z}$的数量：$m$和$n$
-
-%       \Ensure
-%         优化后的$q_{net1}$, $q_{net2}$和$p_{net}$所有参数
-%       \State 通过Xavier方法\cite{glorot2010understanding}初始化$q_{net1}$, $q_{net2}$ and $p_{net}$的所有参数
-%       \While {$\mathcal{L}$没有收敛}
-%           \State 利用公式 \ref{seven} 计算每一个节点$v$的$q_\phi(\bm{y}_v | \bm{A}, \bm{X}, Y_L)$以及$h_v^{K-1}$
-%           \For{i $\leftarrow$ $1$ to $m$}
-%           \State 从分布$q_\phi(Y_U | \bm{A}, \bm{X}, Y_L)$中采样$Y_U$
-%           \State 在采样得到的$Y_U$基础上，利用公式 \ref{eight}计算$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 
-%            \For{j $\leftarrow$ $1$ to $n$}
-%            \State 从分布$q_\phi(\bm{z}| \bm{A}, \bm{X}, Y)$ 中采样$\bm{z}$
-%            \State 在采样得到的$\bm{z}$基础上用公式\ref{nine} 计算$p_{\theta}(\bm{y}_v|\bm{A}, \bm{X}, \bm{z})$
-%            \EndFor
-%           \EndFor
-%           \State 用公式\ref{ten}计算目标函数$\mathcal{L}(\theta, \phi)$ 
-%           \State 用梯度下降法更新$q_{net1}$，$q_{net2}$和$p_{net}$的所有参数
-%       \EndWhile
-%       %\State \Return $P_{net}$
-%     \end{algorithmic}
-%   \end{algorithm}
-% \subsection{基于开源数据集的检测结果}
-% \begin{figure}
-%   \centering
-%   \includegraphics[width=0.6\linewidth]{example-image-a.pdf}
-%   \caption{Example figure}
-%   \label{fig:appendix-survey-figure}
-% \end{figure}
-% \begin{figure}
-%   \centering
-%   \includegraphics[width=0.6\linewidth]{example-image-a.pdf}
-%   \caption{Example figure}
-%   \label{fig:appendix-survey-figure}
-% \end{figure}
 % \subsection{基于真实数据的检测结果}
 % 交叉熵损失函数经常用于分类问题中，特别是在神经网络做分类问题时，也经常使用交叉熵作为损失函数，此外，由于交叉熵涉及到计算每个类别的概率，所以交叉熵几乎每次都和sigmoid(或softmax)函数一起出现。
 
