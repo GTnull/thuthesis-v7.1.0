@@ -22,6 +22,7 @@
 
 模型运行过程： 实验评估
 
+
 UNSW-NB15:
 Normal\2218761
 Fuzzers\24246
@@ -43,3 +44,47 @@ Infiltration Dropbox download, Cool Disk \t 288602 \t 0.000125
 Botnet ARES \t 191033 \t 0.0103
 DDoS LOIT \t 225745 \t 0.5671
 PortScan \t 286467 \t 0.5548
+
+
+sttl
+sbytes
+ct_srv_src
+dmean
+ct_dst_src_ltm
+smean
+ct_srv_dst
+ct_dst_sport_ltm
+ackdat
+ct_src_dport_ltm
+sload
+synack
+ct_src_ltm
+dload
+sinpkt
+service
+ct_dst_ltm
+dur
+rate
+dbytes
+
+
+sttl
+ct_state_ttl
+dttl
+ct_dst_src_ltm
+sbytes
+swin
+service
+state
+dmean
+smean
+dbytes
+sloss
+ackdat
+sload
+ct_dst_sport_ltm
+rate
+dinpkt
+synack
+ct_srv_dst
+dpkts

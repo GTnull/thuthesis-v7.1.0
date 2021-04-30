@@ -43,12 +43,26 @@ SHAP特征重要度的原理是Shapley绝对值越大，其对应的特征越重
 %   \label{fig:shap-importance}
 % \end{figure}
 
-\begin{figure}
+\begin{figure}[htbp]
   \centering
-  \includegraphics[scale=0.5]{shap-importance.png}
-  \caption{shap-importance}
-  \label{fig:shap-importance}
-\end{figure}
+  \begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[scale=0.4]{DT-import-1000.png}
+  \caption{DT模型的特征重要度top20}
+  \end{minipage}
+  \begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[scale=0.4]{RF-import-1000.png}
+  \caption{RF模型的特征重要度top20}
+  \end{minipage}
+
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[scale=0.4]{NN-import-1000.png}
+    \caption{NN模型的特征重要度top20}
+    \end{minipage}
+  \end{figure}
+
 
 由图中可以看出，在CAMPUS数据集中，特征间重要程度呈现均衡化。
 
@@ -61,10 +75,50 @@ SHAP摘要图将特征影响和特征重要度结合起来。摘要图上的每�
   \label{fig:shap-importance-extended}
 \end{figure}
 
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[scale=0.4]{DT-shap-value-1000.png}
+  \caption{DT模型的特征重要度top20}
+  \end{minipage}
+  \begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[scale=0.4]{RF-sha-value-1000.png}
+  \caption{RF模型的特征重要度top20}
+  \end{minipage}
+
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[scale=0.4]{NN-shap-value-1000.png}
+    \caption{NN模型的特征重要度top20}
+    \end{minipage}
+  \end{figure}
+
 SHAP依赖图刻画了全部实例的某个特征值和Shapley值之间的关联。
 
 通过本节的分析，我们得出以下结论：1.DNN算法在CAMPUS数据集上失效的原因之一是训练过程中特征重要度相近，没有哪个。2.其他算法的top10特征都是相似的，DNN没有这样。 这也是RNN没有从数据中学习出特征关系的印证。
 
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[scale=0.4]{DT-import-1000.png}
+  \caption{DT模型的特征重要度top20}
+  \end{minipage}
+  \begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[scale=0.4]{RF-import-1000.png}
+  \caption{RF模型的特征重要度top20}
+  \end{minipage}
+
+  \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[scale=0.4]{NN-import-1000.png}
+    \caption{NN模型的特征重要度top20}
+    \end{minipage}
+  \end{figure}
+  
 从两方面分析：分别用同样的算法在不同数据集上对比。
 \section{特征分析}
 流量特征可以视为反映当前网络流量的一组观察值，从多个角度描述当前的流量场景。好的特征能够真实地反映出流本身的状态信息。例如对于一条单个TCP流，这条流可能是一个正常的端到端的链接，也可能是分布式拒绝服务攻击的一部分，在被攻击者的视角内，它的入流量的带宽急剧增加，且远大于出流量的带宽。图\ref{fig:特征关系}表示某一时刻下部分特征之间的关系，从中我们看出，发送方/接收方数据包长度大小与流的传输速率具有很强的关联性。
