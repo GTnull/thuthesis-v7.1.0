@@ -48,7 +48,7 @@ Spark具有以下几个特点：
   \label{fig:Spark组件}
 \end{figure}
 
-图\ref{fig:spark工作原理}是Spark Streaming的基本工作原理。Spark Streaming本质上是微批处理系统，其将输入数据流划分成批式数据，然后依次处理每批数据。
+图\ref{fig:spark工作原理}是Spark Streaming的基本工作原理\cite{spark}。Spark Streaming本质上是微批处理系统，其将输入数据流划分成批式数据，然后依次处理每批数据。
 \begin{figure}
   \centering
   \includegraphics[scale=0.6]{spark工作原理.png}
@@ -81,9 +81,39 @@ Spark具有以下几个特点：
     \label{fig:特征文件}
   \end{figure}
 
+% 得到特征文件后，需要进一步进行数据预处理。
+% \begin{enumerate}
+%   \item 删除无效信息，使用平均值填充空白值；
+%   \item 对离散值进行one-hot编码，对连续值进行归一化；
 
+% \end{enumerate}
 \subsection{检测模块}
-检测模块分为离线和在线两部分，并且由于第四章中FG-RNN算法的特点，特征关系图（Feature Graph）的更新频率与循环神经网络（RNN）不同，并且这两者在实现中已经解耦，因此RNN的参数更新仅需在离线部分完成，在线部分可以兼顾实时流量的检测和特征关系图参数的更新。
+检测模块分为离线和在线两部分，并且由于第四章中FG-RNN算法的特点，特征关系图（Feature Graph）的更新频率与循环神经网络（RNN）不同，并且这两者在实现中已经解耦，因此RNN的参数更新仅需在离线部分完成，在线部分可以兼顾实时流量的检测和特征关系图参数的更新。该模块的架构图如图\ref{fig:检测模块架构图}所示。
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.6]{检测模块架构图.png}
+  \caption{检测模块架构图}
+  \label{fig:检测模块架构图}
+\end{figure}
+
+
+该模块部分运行过程如图\ref{fig:检测模块运行过程}所示，
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.55]{检测运行过程.png}
+  \caption{检测模块运行过程}
+  \label{fig:检测模块运行过程}
+\end{figure}
+
+由于数据集中异常种类多变，我们发现模型检测效果会随时间剧烈衰减，如图\ref{fig:模型效果随时间衰减}所示，经过5小时后FG-RNN模型效果衰减到普通RNN模型的程度，因此我们加入了动态更新特征图机制，实现模型稳定性。
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.8]{模型效果随时间衰减.png}
+  \caption{模型效果随时间衰减}
+  \label{fig:模型效果随时间衰减}
+\end{figure}
 
 \subsection{输出模块}
 在得到实时检测模块给出的异常流信息以及类型后，我们可以基于此做出进一步的处理。由于校园网流量“异常是常态，甚至半数流量是异常”的特点，若将全部异常信息都汇报给运维人员，大量危害程度低的异常告警势必会掩盖真正值得关注的异常，例如时刻都在发生的网络扫描，由于其重要性低微我们可以将其忽略。
@@ -126,9 +156,43 @@ Spark具有以下几个特点：
 %   % \label{fig:appendix-survey-figure}
 % \end{figure}
 % \section{预测输出模块}
-\section{系统结果展示与分析}
-本节的目标是建立一个实时、高效、鲁棒、可扩展的流量异常检测系统，因此实验评估需要针对大规模流量场景，尽可能达到压力测试的效果。
-本节使用了第3章中CAMPUS数据集的第二段持续时长为18小时的数据作为系统的输入，经过测试，我们发现平均延迟3分钟即可将每个数据包的特征提取到相应的TCP/UDP流中，得到流的特征信息后，实时检测模块可以在1秒内输出异常类型。这得益于离线模型的定期更新。此外，我们还分析了该模型的失效时间，每次更新完一次模型的参数，可以看到随着时间的增长，模型效果越来越差，在5小时后准确率会低于78\%。
+\section{系统实现}
+本节对上述设计的异常检测系统进行了测试和验证。本文使用了三台主机搭建的集群运行该系统，分别命名为master、slave1、slave2，每台主机安装jdk-1.8.2，hadoop-2.7，spark-3.0，zookeeper-3.4，kafka-2.13等软件，用于搭建该系统所需要的环境，具体的配置参数如表所示。
+\begin{table*}[h]
+  \small
+  \caption{集群各节点的配置情况}
+  \label{集群各节点的配置情况}
+  \centering
+  \begin{tabular}{p{0.1\columnwidth}<{\centering} p{0.1\columnwidth}<{\centering} p{0.3\textwidth}<{\centering} p{0.45\textwidth}<{\centering}}
+  \toprule
+  主机名 & 内存 & CPU &  进程 \\
+  
+  \midrule
+  % a & b & c & d \\
+ master & 16GB & Intel(R) Core(TM) i7-8700 & NameNode, ResourceManager, QuorumPeerMain, Kafka, NodeManager \\
+ slave1 & 8GB & Intel(R) Core(TM) i5-7300U & NameNode, ResourceManager, QuorumPeerMain, Kafka \\
+ slave2 & 8GB & Intel(R) Core(TM) i5-8300 & NameNode, ResourceManager, QuorumPeerMain, Kafka \\
+ 
+   \bottomrule
+  
+  \end{tabular}
+  \end{table*}
+
+在系统环境搭建好后，启动并测试系统中各个模块的流程如下：
+\begin{enumerate}
+  \item 在三台主机上，执行start-dfs.sh启动hdfs系统，执行start-yarn启动yarn资源管理器，执行zkServer.sh启动zookeeper，执行kafka-server-start.sh ./config/server.properties \& 后台启动kafka。
+  \item 使用脚本spark-submit --class streaming.FGRNN $\backslash$ \\
+  --master yarn --deploy-mode cluster $\backslash$ \\
+  --driver-memory 8g --executor-memory 8g $\backslash$ \\
+  --executor-core 1 --num-executors 2 $\backslash$ \\
+ --name feature\_extract\_job feature\_extract.py以及--name off\_fgrnn.py，--name online\_fgrnn.py分别向spark集群提交特征提取、离线训练模型和在线检测模型三个任务。
+ \item 运行hadoop fs -put *.pcap /input 将pcap文件拷贝到hdfs系统。
+ \item 访问error.html，total.html等页面查看任务执行情况，访问hdfs系统中的输出查看检测结果。
+\end{enumerate}
+% 本节使用了第3章中CAMPUS数据集的第二段持续时长为18小时的数据作为系统的输入，经过测试，我们发现平均延迟3分钟即可将每个数据包的特征提取到相应的TCP/UDP流中，得到流的特征信息后，实时检测模块可以在1秒内输出异常类型。这得益于离线模型的定期更新。此外，我们还分析了该模型的失效时间，每次更新完一次模型的参数，可以看到随着时间的增长，模型效果越来越差，在5小时后准确率会低于60\%。
 
 \section{系统应用}
-在应用上述异常检测系统进行检测时，我们发现端口扫描类的攻击占比很高，且呈现出xx的特点。基于此，我们深入分析了端口扫描这一攻击现象，及其后续影响，发现对不存在ip进行的端口扫描会导致ARP flooding，进而影响无线网络的性能。
+在应用上述异常检测系统进行检测时，我们发现根据特征分析以及检测结果，该系统能够更有效地检测出DDoS、PortScan等异常。
+
+我们发现在校园网vlan-pool架构下，出现大量PortScan时，由于外部主机试图访问内网不存在的主机，会在子网内部引发arp报文，导致时延增高。
+针对这个问题，该系统能够检测出扫描ip并输出ip list，由运维人员进行异常ip的封禁。经过模拟，该方法能够降低部分区域10-20ms的平均时延。

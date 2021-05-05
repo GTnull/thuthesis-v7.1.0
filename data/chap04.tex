@@ -2,39 +2,49 @@
 
 \chapter{基于特征关系图的循环神经网络算法}
 \section{引言}
-从第三章的实验可以知道，现有的异常检测算法能够在公开数据集取得较为不错的表现，但是在真实数据集——清华大学校园网流量数据上效果均无法达到要求。这是因为相比于人工构造的公开数据集，清华大学校园网数据具有规模大、应用类型种类繁多、异常流量占比多、难以学到基线等特点。现有的算法无论是传统机器学习的LR、NB、DT，还是拟合能力更强大的深度学习模型CNN、LSTM、GRU，都有精确率低、误报率高的问题。本章将先从特征分析着手，引入特征之间的关系矩阵，将其加入到神经网络的训练中，从而获得更好的检测效果。
+从第三章的实验可以知道，现有的异常检测算法能够在公开数据集取得较为不错的表现，但是在真实数据集——清华大学校园网流量数据上效果均无法达到要求。这是因为相比于人工构造的公开数据集，清华大学校园网数据具有规模大、应用类型种类繁多、异常流量占比多、难以学到基线等特点。而RNN、LSTM、GRU等拟合能力强大的深度学习模型在校园网数据集中有着精确率低、误报率高的问题。因此本章将先从特征分析着手，分析RNN模型效果不佳的原因，然后引入特征之间的关系矩阵，将其加入到神经网络的训练中，从而获得更好的检测效果。
 
-\section{CAMPUS数据集和开源数据集的不同之处}
-同样的算法和参数，在不同数据集上表现迥异，并且我们在多个数据集上都尝试了不同的参数。说明数据分布、类别存在差异，。并且变量的维度一致。
+\section{特征分析}
+模型可解释的分析方法通常有两类：
+\begin{enumerate}
+  \item 通过数学推导来解释每个特征如何发挥作用，例如线性回归中的系数，SVM中的支撑平面等，这类方法旨在分析因果关系。
+  \item 针对神经网络等“黑盒”模型，通过分析特征如何影响最终预测结果，来部分解释模型的原因，这类方法旨在分析关联关系。
+\end{enumerate}
+本文中采用第二类方法，使用Shapley值这一工具来尝试解释RNN类模型在CAMPUS数据集中效果不佳的原因。
+% \section{CAMPUS数据集和开源数据集的不同之处}
+% 同样的算法和参数，在不同数据集上表现迥异，并且我们在多个数据集上都尝试了不同的参数。说明数据分布、类别存在差异，。并且变量的维度一致。
 
-通过对比两者的不同，我们发现是因为缺乏特征关系。为此我们将分析特征关系。
+% 通过对比两者的不同，我们发现是因为缺乏特征关系。为此我们将分析特征关系。
 
-下表为UNSW-NB15的攻击类型、每类攻击的占比。三个饼状图。
-对攻击类型做个分类，发现不同之处。
+% 下表为UNSW-NB15的攻击类型、每类攻击的占比。三个饼状图。
+% 对攻击类型做个分类，发现不同之处。
 
-寻找攻击类型和特征之间的关系，也就是通过实验发现哪些特征起到了作用。
+% 寻找攻击类型和特征之间的关系，也就是通过实验发现哪些特征起到了作用。
 
-得出结果：相比于其他两个数据集，CAMPUS数据集具有以下特点：
+% 得出结果：相比于其他两个数据集，CAMPUS数据集具有以下特点：
 
-1.攻击类型更多更复杂。CICIDS数据集仅有7种攻击类型，UNSW-NB有9种。
+% 1.攻击类型更多更复杂。CICIDS数据集仅有7种攻击类型，UNSW-NB有9种。
 
-2.在CAMPUS中特征和攻击类型的关联性更弱，需要进一步挖掘。（如何刻画特征和label之间的关联性）分别画图表示关联性强弱。
+% 2.在CAMPUS中特征和攻击类型的关联性更弱，需要进一步挖掘。（如何刻画特征和label之间的关联性）分别画图表示关联性强弱。
 
 
-使用DNN训练神经网络模型时。Shapley值起源于1953年的博弈论\ref{lundberg2018consistent}，是为了解决这样一个问题：一群拥有不同技能的参与者为了集体奖励而相互合作。那么，如何在小组中公平分配奖励？在机器学习领域，参与者就是输入的特征，而集体奖励则是模型输出的结果。Shapley值可用于计算每个特征对于模型输出的贡献。其公式如下： 
+Shapley值起源于1953年的博弈论\cite{lundberg2018consistent}，是为了解决这样一个问题：一群拥有不同技能的参与者为了集体奖励而相互合作。那么，如何在小组中公平分配奖励？在机器学习领域，参与者就是输入的特征，而集体奖励则是模型输出的结果。Shapley值可用于计算每个特征对于模型输出的贡献。其公式如下： 
 \begin{equation}
   \phi_i(v) = \sum_{S\subseteq N \setminus \{i\}} \frac{|S|! (|N| - |S| - 1)!}{|N|!}(v(S \cup \{i\}) - v(S))
 \end{equation}
 
 其中，$N$是所有特征构成的集合，$S$是$N$的子集，$v(\cdot)$可以认为是模型，$\phi_i(v)$ 即为第i个特征的“重要性”。
 
-本文利用python中的shap库\footnote{https://github.com/slundberg/shap}分别计算了RNN模型在三个数据集中的Shapley值，并从SHAP特征重要度、SHAP摘要图、SHAP依赖图三方面进行了可视化分析。
+本文利用python中的shap库\footnote{https://github.com/slundberg/shap}分别计算了RNN模型在三个数据集中的Shapley值，并从SHAP特征重要度、SHAP摘要图两方面进行了可视化分析。
 
 SHAP特征重要度的原理是Shapley绝对值越大，其对应的特征越重要。由于公式4-1中计算得到的是单个实例的Shapley值，因此我们需要对每个特征的全部实例取平均值：
 \begin{equation}
   I_j = \sum_{i=1}^n |\phi_j^{(i)}|
 \end{equation}
-接下来我们对每个特征重要度降序排序并且进行绘制，结果如图所示。从中可以看出，排名前列的特征更多是与报文大小相关的特征和报文发送时间相关的特征。通过协议分析得到的特征的重要性相对更弱。
+图4.1和图4.2分别是DT和RF模型在UNSW-NB15数据集中的特征重要度排序，图4.3是RNN模型在CAMPUS数据集中的特征重要度排序。从中可以看出，两种树模型的前20个重要特征的重合度很高，都利用了sttl（源报文的ttl字段）、sbytes（会话中从源发出的总字节数）、synack（第一次发送报文到收到确认报文的时间）等特征，这些“强特征”对于模型判断某条流是否为异常提供了重要信息。而RNN模型在CAMPUS数据集上仅利用了极少数的特征。
+
+
+% 接下来我们对每个特征重要度降序排序并且进行绘制，结果如图所示。从中可以看出，排名前列的特征更多是与报文大小相关的特征和报文发送时间相关的特征。通过协议分析得到的特征的重要性相对更弱。
 
 % \begin{figure}
 %   \centering
@@ -47,80 +57,97 @@ SHAP特征重要度的原理是Shapley绝对值越大，其对应的特征越重
   \centering
   \begin{minipage}[t]{0.48\textwidth}
   \centering
+  % \label{DT模型的特征重要度top20}
   \includegraphics[scale=0.4]{DT-import-1000.png}
   \caption{DT模型的特征重要度top20}
+  
   \end{minipage}
   \begin{minipage}[t]{0.48\textwidth}
   \centering
+  % \label{RF模型的特征重要度top20}
   \includegraphics[scale=0.4]{RF-import-1000.png}
   \caption{RF模型的特征重要度top20}
+ 
   \end{minipage}
 
   \begin{minipage}[t]{0.48\textwidth}
     \centering
+    % \label{RNN模型的特征重要度top20}
     \includegraphics[scale=0.4]{NN-import-1000.png}
-    \caption{NN模型的特征重要度top20}
+    \caption{RNN模型的特征重要度top20}
+    
     \end{minipage}
   \end{figure}
 
 
-由图中可以看出，在CAMPUS数据集中，特征间重要程度呈现均衡化。
+% 由图中可以看出，在CAMPUS数据集中，特征间重要程度呈现均衡化。
 
-SHAP摘要图将特征影响和特征重要度结合起来。摘要图上的每个点都是一个特征和一个实例的Shapley值，y轴上的位置由特征决定，x轴上的位置由Shapley值决定，颜色代表特征值从小到大，重叠点在y轴方向上抖动，因此我们可以了解每个特征的Shapley值的分布。
+图4.4-4.6是SHAP摘要图。SHAP摘要图将特征影响和特征重要度结合起来。摘要图上的每个点都是一个特征和一个实例的Shapley值，y轴上的位置由特征决定，x轴上的位置由Shapley值决定，颜色代表特征值从小到大，重叠点在y轴方向上抖动，因此我们可以了解每个特征的Shapley值的分布。例如sttl这一特征，红色说明特征值很高，在图中sttl很高时，其SHAP值为0，说明对预测结果影响很小，这点也符合我们的认知。从图中对比可以看出，RNN模型的大部分特征的SHAP值都为0。
 
-\begin{figure}
-  \centering
-  \includegraphics[scale=0.5]{shap-importance-extended.png}
-  \caption{shap-importance-extended}
-  \label{fig:shap-importance-extended}
-\end{figure}
+% \begin{figure}
+%   \centering
+%   \includegraphics[scale=0.5]{shap-importance-extended.png}
+%   \caption{shap-importance-extended}
+%   \label{fig:shap-importance-extended}
+% \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \begin{minipage}[t]{0.48\textwidth}
   \centering
   \includegraphics[scale=0.4]{DT-shap-value-1000.png}
-  \caption{DT模型的特征重要度top20}
+  \caption{DT模型在UNSW-NB15中的摘要图}
   \end{minipage}
   \begin{minipage}[t]{0.48\textwidth}
   \centering
   \includegraphics[scale=0.4]{RF-sha-value-1000.png}
-  \caption{RF模型的特征重要度top20}
+  \caption{RF模型在UNSW-NB15中的摘要图}
   \end{minipage}
 
   \begin{minipage}[t]{0.48\textwidth}
     \centering
     \includegraphics[scale=0.4]{NN-shap-value-1000.png}
-    \caption{NN模型的特征重要度top20}
+    \caption{RNN模型的特征重要度top2}
     \end{minipage}
   \end{figure}
 
-SHAP依赖图刻画了全部实例的某个特征值和Shapley值之间的关联。
+% SHAP依赖图刻画了全部实例的某个特征值和Shapley值之间的关联。
 
-通过本节的分析，我们得出以下结论：1.DNN算法在CAMPUS数据集上失效的原因之一是训练过程中特征重要度相近，没有哪个。2.其他算法的top10特征都是相似的，DNN没有这样。 这也是RNN没有从数据中学习出特征关系的印证。
+通过本节的分析，我们得出以下结论：
+\begin{enumerate}
+  \item SHAP特征重要度和摘要图可以一定程度的解释模型。
+  \item 对比不同的数据集，树模型中top20重要性的特征相似，说明这些“强特征”更能影响检测结果。
+  \item 在CAMPUS数据集中，相比于其他模型，RNN仅利用到了少部分特征信息。
+\end{enumerate}
+% 特征分析结论：
+% SHAP特征重要性和摘要图可以一定程度的解释模型；
+% 对比不同的数据集，树模型中top20重要性的特征相似，说明这些“强特征”更能影响检测结果；
+% 在CAMPUS数据集中，相比于其他模型，RNN仅利用到了少部分特征信息。
 
-\begin{figure}[htbp]
-  \centering
-  \begin{minipage}[t]{0.48\textwidth}
-  \centering
-  \includegraphics[scale=0.4]{DT-import-1000.png}
-  \caption{DT模型的特征重要度top20}
-  \end{minipage}
-  \begin{minipage}[t]{0.48\textwidth}
-  \centering
-  \includegraphics[scale=0.4]{RF-import-1000.png}
-  \caption{RF模型的特征重要度top20}
-  \end{minipage}
+% 1.DNN算法在CAMPUS数据集上失效的原因之一是训练过程中特征重要度相近，没有哪个。2.其他算法的top10特征都是相似的，DNN没有这样。 这也是RNN没有从数据中学习出特征关系的印证。
 
-  \begin{minipage}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[scale=0.4]{NN-import-1000.png}
-    \caption{NN模型的特征重要度top20}
-    \end{minipage}
-  \end{figure}
-  
-从两方面分析：分别用同样的算法在不同数据集上对比。
-\section{特征分析}
+% \begin{figure}[htbp]
+  % \centering
+  % \begin{minipage}[t]{0.48\textwidth}
+  % \centering
+  % \includegraphics[scale=0.4]{DT-import-1000.png}
+  % \caption{DT模型的特征重要度top20}
+  % \end{minipage}
+  % \begin{minipage}[t]{0.48\textwidth}
+  % \centering
+  % \includegraphics[scale=0.4]{RF-import-1000.png}
+  % \caption{RF模型的特征重要度top20}
+  % \end{minipage}
+
+  % \begin{minipage}[t]{0.48\textwidth}
+  %   \centering
+  %   \includegraphics[scale=0.4]{NN-import-1000.png}
+  %   \caption{NN模型的特征重要度top20}
+  %   \end{minipage}
+  % \end{figure}
+
+% 从两方面分析：分别用同样的算法在不同数据集上对比。
+\section{特征关系图}
 流量特征可以视为反映当前网络流量的一组观察值，从多个角度描述当前的流量场景。好的特征能够真实地反映出流本身的状态信息。例如对于一条单个TCP流，这条流可能是一个正常的端到端的链接，也可能是分布式拒绝服务攻击的一部分，在被攻击者的视角内，它的入流量的带宽急剧增加，且远大于出流量的带宽。图\ref{fig:特征关系}表示某一时刻下部分特征之间的关系，从中我们看出，发送方/接收方数据包长度大小与流的传输速率具有很强的关联性。
 
 \begin{figure}
@@ -435,19 +462,34 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。
 \end{enumerate}
 因此，本文采用第三种方式将额外的特征关系图信息与原有特征结合起来。
 
+\section{超参数设置}
+超参数的优化在训练机器学习模型中极为重要，会直接影响模型的最终效果。在神经网络中，超参数是用于控制学习过程的参数，而普通参数是指节点权重等网络内部的参数。因此训练模型的首要步骤就是选择合适的超参数。具体地，本文中的超参数设置如下。
+\begin{enumerate}
+  \item 参数初始化。参数初始化又称权重初始化。深度学习模型训练的本质是对各个节点的权重进行更新，所以这些权重需要有相应的初始值。权重初始化方法对对模型的收敛速度和性能有着至关重要的影响。除去全零初始化这种方法外，最常用的有Xavier初始化\cite{glorot2010understanding}和正交初始化\cite{henaff2016recurrent}等。本文使用Xavier初始化方法，保持输入和输出的方差一致（服从相同的分布），它可以帮助减少梯度消失的问题，使得信号在神经网络中可以传递得更深，在经过多层神经元后保持在合理的范围（不至于太小或太大）。
+  \item 优化器。优化器也就是寻找模型最优解所用的方法。比如最基本的梯度下降法，沿着梯度的方向不断减小模型参数，从而最小化损失函数。但是其具有局部最优解的缺点，本文采用Adam优化器，它是一种自适应矩阵估计的优化器，可以根据梯度动态地调整学习速率。
+  \item 学习率。权重的更新时，在梯度项之前会乘以一个系数，这个系数就是学习率。如果学习率太小，则收敛很慢会增长模型训练时间，如果学习率太大，可能会导致损失函数振荡，甚至最终发散。由于本文采用Adam优化器，可以自适应地调整学习率，因此设置初始学习率为0.01。
+  \item 批次大小。批次大小将决定我们一次训练的样本数目，也会影响到模型的优化程度和速度。相对于正常数据集，如果batch-size过小，训练数据就会非常难收敛，导致欠拟合，增大batch-size，模型训练速度会加快，但是所需的内存容量也会增加。因此选定一个合适的batch-size，就是在内存效率和内存容量之间作出最佳平衡。本文中的batch-size设置为128。
+  \item 正则化。正则化可以防止过拟合和提高模型泛化能力，但是会对模型产生一定约束。本文使用L2正则化，正则化系数设置为0.001。
+  
+\end{enumerate}
+
+
+
 \section{实验评估}
-为了验证本文提出的FG-RNN模型的性能，本文分别在UNSW-NB15、CICIDS2017、CAMPUS三个数据集上，从多个评价维度对FG-RNN进行了实验评估，并与LSTM模型进行了对比。
+为了验证本文提出的FG-RNN模型的性能，本文分别在UNSW-NB15、CICIDS2017、CAMPUS三个数据集上，对FG-RNN进行了对比评估。
 % \subsection{评估数据集}
-\subsection{模型训练}
+% \subsection{模型训练}
 首先，将数据集按照70\%、15\%、15\%的比例分为训练集、验证集和测试集，分别用于训练模型、调整模型超参数和测试模型。模型的损失函数为交叉熵损失函数，其公式为：
 \begin{equation}
-  a = \frac{b}{c}
+  L = \frac{1}{N} \sum_i{L_i} = \frac{1}{N}\sum_i - \sum_{c=1}^{M}y_{ic}\log{p_{ic}}
 \end{equation}
-\subsection{模型稳定性分析}
-对于本文提出的FG-RNN模型和所有基准模型，我们分别进行了多次实验。
 
-\subsection{模型准确性分析}
-为了验证FG-RNN模型的有效性，本节首先在清华大学无线校园网真实场景下的数据集上开展有效性评估，随后在异常检测领域下的两个经典的公开数据集上进行实验，分别对比了FG-RNN和多个模型的评估效果，最后分析了模型参数的敏感性。
+
+% \subsection{模型稳定性分析}
+% 对于本文提出的FG-RNN模型和所有基准模型，我们分别进行了多次实验。
+
+% \subsection{模型准确性分析}
+% 为了验证FG-RNN模型的有效性，本节首先在清华大学无线校园网真实场景下的数据集上开展有效性评估，随后在异常检测领域下的两个经典的公开数据集上进行实验，分别对比了FG-RNN和多个模型的评估效果，最后分析了模型参数的敏感性。
 
 
 \subsection{训练过程对比}
@@ -469,9 +511,35 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。
   \end{figure}
 
 \subsection{实验结果对比}
-
-根据第3章的实验结果，LSTM和GRU在CAMPUS数据集下准确率仅为65.4\%和67.8\%，而加入固定的特征关系图后，LSTM准确率即可达到81.2\%，将特征关系图与RNN同时训练，动态更新特征关系矩阵的参数，则FG-RNN算法的准确率可达到85.3\%。
-
+对于本文提出的模型和baseline模型，我们都进行了5次重复试验。从表\ref{不同数据集下实验评估结果FG}中可以看出，在UNSW-NB15和CICIDS2017数据集上，FG-RNN相比于基准模型没有明显提升，这可能是因为这两个数据集场景简单，各类算法的效果已经到达瓶颈。而在CAMPUS数据集上，FG-RNN明显好于LR、DT、RF这些基准模型，并且在基本的RNN类模型上提升巨大。
+\begin{table*}[h]
+  \small
+  \caption{不同数据集下实验评估结果(\%)}
+  \label{不同数据集下实验评估结果FG}
+  \centering
+  \begin{tabular}{c|c|ccc|ccc|c}
+  \toprule
+  
+    数据集 &  任务  &  
+    LR &  DT & RF & RNN & LSTM & GRU & FG-RNN  \\
+  \midrule
+  
+  UNSW-NB15 & 二分类 & 96.8 & 97.33 & 98.52 &  95.51 & 96.74 & 94.91 & 95.8 \\ 
+  
+  & 多分类 &94.73 & 97.96 & 96.82 & 93.98 & 92.11 & 94.30 & 94.24 \\
+  
+  \midrule
+  CICIDS2017 & 二分类 & 98.26 & 97.11 & 95.54 & 90.18 & 88.04 & 91.49 & 92.45 \\
+  & 多分类 & 97.01 & 97.37 & 94.41 & 88.31 & 91.16 & 90.18 & 90.67\\
+  \midrule
+  CAMPUS & 二分类 & 76.98 & 77.95 & 77.51 & 55.62 & 59.80 & 55.25 & 84.34 \\
+  & 多分类 & 73.33 & 74.01 & 74.54 & 53.01 & 56.59 & 59.28 & 82.74\\
+  
+    \bottomrule
+  
+  \end{tabular}
+  \end{table*}
+% 根据第3章的实验结果，LSTM和GRU在CAMPUS数据集下准确率仅为65.4\%和67.8\%，而加入固定的特征关系图后，LSTM准确率即可达到81.2\%，将特征关系图与RNN同时训练，动态更新特征关系矩阵的参数，则FG-RNN算法的准确率可达到85.3\%。
 
 
 % \subsection{基于真实数据的检测结果}
