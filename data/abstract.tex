@@ -4,11 +4,16 @@
 
 %TODO: 摘要不要写这么细，异常检测的目的和校园网特点。 BGP劫持，修改掉形容词。摘要不要写太细，背景不要太详细，把贡献说清楚就可以。重新写一遍摘要。扫描流量、攻击流量占比多。具体多多少
 \begin{abstract}
-  现如今互联网已经成为最重要的信息化基础设施，智能运维作为新兴的网络管理技术倍受关注。 网络流量异常检测是智能运维的关键环节，从网络故障管理的角度来说，做好异常检测可以提前预测故障的发生；从性能管理的角度来说，可以发现性能不佳的区域，避免因误配置、架构不合理导致性能下降；从安全管理的角度来说，可以在网络攻击的前期阶段，及时发现并预警后续攻击，进而做出防御措施。然而，日益复杂的网络环境给异常检测算法带来了诸多问题和挑战。本文以校园网为例，进行网络流量异常检测算法和系统的研究。主要的研究内容和贡献如下：
+  现如今互联网已经成为最重要的信息化基础设施，智能运维作为新兴的网络管理技术倍受关注。 网络流量异常检测是智能运维的关键环节，具有重要意义。然而，现有的流量异常检测研究多是面向仿真的开源数据集环境，少有针对真实网络环境的有效算法。本文以清华大学校园网为例，进行网络流量异常检测算法和系统的研究。校园网流量具有流量规模大、应用类型多、异常种类多且实时变化等特点。现有的异常检测算法在校园网环境下具有以下几个问题：（1）应用类型多导致流量特征复杂，因此很难达到较高的检测率和较低的误报率；（2）不管是传统机器学习算法还是拟合能力更强的深度学习模型，都很难有效地从复杂的流量环境中学习到正常流量的基线；（3）面对海量数据规模时，现有的算法模型无法或很难做到实时性。
+  为应对这些问题，本文主要的研究内容和贡献如下：
+  % 从网络故障管理的角度来说，做好异常检测可以提前预测故障的发生；从性能管理的角度来说，可以发现性能不佳的区域，避免因误配置、架构不合理导致性能下降；从安全管理的角度来说，可以在网络攻击的前期阶段，及时发现并预警后续攻击，进而做出防御措施。然而，日益复杂的网络环境给异常检测算法带来了诸多问题和挑战。本文以校园网为例，进行网络流量异常检测算法和系统的研究。主要的研究内容和贡献如下：
 \begin{enumerate}
-  \item 本文设计了一种基于特征关系图的循环神经网络算法(FG-RNN)。原有的异常检测算法通常直接利用提取的特征进行训练，本文提出的FG-RNN算法有效利用了特征之间的相关性信息，将其加入到神经网络的训练过程中。经过在开源数据集、真实数据集下分别进行的实验验证，本文提出的算法检测结果优于现有的基于机器学习、深度学习的算法。
-  \item 本文对基于特征之间关系图的循环神经网络算法进行了流式改造，使之能够满足当前实时异常检测的需求。为了应对海量的校园网流量数据和高速数据流，本文设计了一个基于Spark Streaming的实时异常检测系统。该系统分为输入模块、模型模块、检测模块三部分，输入模块负责将流量数据进行窗口划分、特征选择、特征抽取、合并计算，得到的特征矩阵与预训练得到的关系矩阵一同送到模型中进行训练，模型中的参数每2小时更新一次，最后由检测模块对当前流量进行判别，并给出异常流量的类别。
-  \item 基于该实时异常检测系统，在大规模真实数据集上用多个不同的衡量指标对FG-RNN和现有神经网络算法进行实验对比，FG-RNN算法效果均优于其他算法。
+  \item 本文对经典开源数据集和清华大学校园网数据集进行了分析对比，并且使用多个算法进行了实验评估，分析了现有算法存在的问题。
+  \item 本文设计了一种基于特征关系图的循环神经网络算法(FG-RNN)。通过在RNN算法中引入特征图信息，FG-RNN模型可以增强对特征的利用。经过在开源数据集、真实数据集下分别进行的实验验证，本文提出的算法检测结果优于现有的基于机器学习、深度学习的算法。
+  % 原有的异常检测算法通常直接利用提取的特征进行训练，本文提出的FG-RNN算法有效利用了特征之间的相关性信息，将其加入到神经网络的训练过程中。经过在开源数据集、真实数据集下分别进行的实验验证，本文提出的算法检测结果优于现有的基于机器学习、深度学习的算法。
+  \item 本文对基于特征关系图的循环神经网络算法进行了流式改造，使之能够满足当前实时异常检测的需求。为了应对海量的校园网流量数据和高速数据流，本文设计了一个基于Spark Streaming的实时异常检测系统。该系统分为输入模块、检测模块、输出模块三部分。
+  % ，输入模块负责将流量数据进行窗口划分、特征选择、特征抽取、合并计算，得到的特征矩阵与预训练得到的关系矩阵一同送到模型中进行训练，模型中的参数每2小时更新一次，最后由检测模块对当前流量进行判别，并给出异常流量的类别。
+  \item 基于该实时异常检测系统，在大规模真实数据集上对FG-RNN和现有神经网络算法进行实验对比，FG-RNN算法效果均优于其他算法，并且这些提升都来自于本文引入的特征关系图。
 \end{enumerate}
   
 
@@ -27,12 +32,13 @@
 \end{abstract}
 
 \begin{abstract*}
-  Nowadays, the Internet has become one of the most important information infrastructure, as an emerging network management technology, AIOps has attracted much attention. Network traffic anomaly detection is a key component of AIOps. From the perspective of network fault management, good anomaly detection algorithm can predict the occurrence of faults in advance; from the perspective of performance management, poo r performance areas can be found to avoid performance degradation due to misconfiguration and unreasonable architecture; from the perspective of security management, subsequent attacks can be detected and warned in the early stages of network attacks, and then defensive measures can be taken. However, the increasingly complex network environment brings many problems and challenges to the anomaly detection algorithm. 
-  In order to solve the above problems and challenges, this paper conducts research in a real scenario of Tsinghua University campus network, and the main research contents and contributions are as follows.
+  Nowadays, the Internet has become one of the most important information infrastructure, as an emerging network management technology, AIOps has attracted much attention. Network traffic anomaly detection is a key component of AIOps. However, most of the existing traffic anomaly detection studies are oriented to simulated open source dataset environments, and few effective algorithms are available for real network environments. In this paper, we take Tsinghua University campus network as an example to conduct research on network traffic anomaly detection algorithm and system. Campus network traffic is characterized by large traffic scale, many application types, and many types of anomalies and real-time changes. Existing anomaly detection algorithms have several problems in the campus network environment: (1) multiple application types lead to complex traffic characteristics, so it is difficult to achieve a high detection rate and a low false alarm rate; (2) whether traditional machine learning algorithms or deep learning models with better fitting ability, it is difficult to effectively learn the baseline of normal traffic from the complex traffic environment; (3) when facing massive data scale , existing algorithmic models are unable or difficult to achieve real-time. In order to solve the above problems and challenges, the main research components and contributions of this paper are as follows.
+
   \begin{enumerate}
-    \item In this paper, a recurrent neural network algorithm (FG-RNN) based on the relationship graph between features is designed. While the original anomaly detection algorithm is usually trained directly using the extracted features, the FG-RNN algorithm proposed in this paper effectively utilizes the correlation information between features and adds it to the training process of the neural network. After experimental validation under open source datasets and real datasets respectively, the detection results of the algorithm proposed in this paper outperform the existing machine learning and deep learning based algorithms.
-    \item In this paper, the FG-RNN algorithm based is streamed and modified so that it can meet the current demand of real-time anomaly detection. In order to cope with the massive campus network traffic data and high-speed data streams, this paper designs a real-time anomaly detection system based on Spark Streaming. The system is divided into three parts: input module, model module, and detection module. The input module is responsible for dividing the traffic data into windows, feature selection, feature extraction, and merging calculation, and the obtained feature matrix is sent to the model for training together with the relationship matrix obtained from pre-training, and the parameters in the model are updated every 2 hours. Finally, the detection module discriminates the current traffic and gives the category of abnormal traffic.
-    \item Based on this real-time anomaly detection system, FG-RNN and existing neural network algorithms are experimentally compared on a large-scale real data set using several different measures, and both FG-RNN algorithms outperform other algorithms.
+    \item In this paper, we analyze and compare the classical open source dataset and Tsinghua University campus network dataset, and conduct experimental evaluation using several algorithms to analyze the problems of existing algorithms.
+    \item In this paper, a recurrent neural network algorithm (FG-RNN) based on feature-relationship graph is designed. By adding feature graph information to the RNN algorithm, the FG-RNN model can enhance the utilization of features. After experimental validation under open source dataset and real dataset respectively, the detection results of the algorithm proposed in this paper outperform the existing machine learning and deep learning based algorithms.
+    \item In this paper, the recurrent neural network algorithm based on feature relationship graph is streamed and modified to meet the current demand of real-time anomaly detection. In order to cope with the massive campus network traffic data and high-speed data streams, this paper designs a real-time anomaly detection system based on Spark Streaming. The system is divided into three parts: input module, detection module, and output module.
+    \item Based on this real-time anomaly detection system, FG-RNN and existing neural network algorithms are experimentally compared on large-scale real data sets, and both FG-RNN algorithms outperform other algorithms, and these enhancements come from the feature relationship graphs introduced in this paper.
   \end{enumerate}
 
 
