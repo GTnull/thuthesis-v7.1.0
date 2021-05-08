@@ -96,18 +96,18 @@ SHAP特征重要度的原理是Shapley绝对值越大，其对应的特征越重
   \begin{minipage}[t]{0.48\textwidth}
   \centering
   \includegraphics[scale=0.4]{DT-shap-value-1000.png}
-  \caption{DT模型在UNSW-NB15中的摘要图}
+  \caption{DT模型在UNSW中的摘要图}
   \end{minipage}
   \begin{minipage}[t]{0.48\textwidth}
   \centering
   \includegraphics[scale=0.4]{RF-sha-value-1000.png}
-  \caption{RF模型在UNSW-NB15中的摘要图}
+  \caption{RF模型在UNSW中的摘要图}
   \end{minipage}
 
   \begin{minipage}[t]{0.48\textwidth}
     \centering
     \includegraphics[scale=0.4]{NN-shap-value-1000.png}
-    \caption{RNN模型的特征重要度top2}
+    \caption{RNN模型在CAMPUS中的摘要图}
     \end{minipage}
   \end{figure}
 
@@ -147,8 +147,8 @@ SHAP特征重要度的原理是Shapley绝对值越大，其对应的特征越重
   % \end{figure}
 
 % 从两方面分析：分别用同样的算法在不同数据集上对比。
-\section{特征关系图}
-流量特征可以视为反映当前网络流量的一组观察值，从多个角度描述当前的流量场景。好的特征能够真实地反映出流本身的状态信息。例如对于一条单个TCP流，这条流可能是一个正常的端到端的链接，也可能是分布式拒绝服务攻击的一部分，在被攻击者的视角内，它的入流量的带宽急剧增加，且远大于出流量的带宽。图\ref{fig:特征关系}表示某一时刻下部分特征之间的关系，从中我们看出，发送方/接收方数据包长度大小与流的传输速率具有很强的关联性。
+\section{特征关系}
+流量特征可以视为反映当前网络流量的一组观察值，从多个角度描述当前的流量场景。好的特征能够真实地反映出流本身的状态信息。例如对于一条单个TCP流，这条流可能是一个正常的端到端的连接，也可能是分布式拒绝服务攻击的一部分，在被攻击者的视角内，它的入流量的带宽急剧增加，且远大于出流量的带宽。图\ref{fig:特征关系}表示某一时刻下部分特征之间的关系，从中我们看出，发送方/接收方数据包长度大小与流的传输速率具有很强的关联性。
 
 \begin{figure}
   \centering
@@ -156,6 +156,38 @@ SHAP特征重要度的原理是Shapley绝对值越大，其对应的特征越重
   \caption{特征关系}
   \label{fig:特征关系}
 \end{figure}
+
+我们分析了暴力猜解攻击的部分特征信息，从表\ref{暴力猜解case分析}中可以看出，相比于正常流量，当发生暴力猜解攻击时，其从源报文发出的总字节数（sbytes）和源报文的间隔时间的平均值（sinpkt）都非常小。在这种场景下，sbytes和sinpkt的关联性更强，而在正常流量场景下两者的关联性更弱。
+
+\begin{table*}[h]
+  \small
+  \caption{暴力猜解case分析}
+  \label{暴力猜解case分析}
+  \centering
+  \begin{tabular}{cccccccc}
+  \toprule
+  dur & proto & sbytes & dbytes & sinpkt & dinpkt & ... & attack type \\
+  % 会话持续时间 & 协议 & \tabincell{c}{从源发出的\\总字节数} & \tabincell{c}{从目的发出的\\总字节数} & \tabincell{c}{源报文的间隔\\时间的平均值} & \tabincell{c}{目的报文的间隔\\时间的平均值} & 。。。 & 攻击类型 \\
+  \midrule
+  0.216048 &	113	&990	&2038	&24.005333	&28.037572 & ... & Normal\\
+  0.824394	&113	&1054	&1344	&43.335262	&42.801578 & ... & Normal\\
+  0.000007	&119	&114	&0	&0.007	&0 & ... & Generic\\
+  0.000007	&119	&114	&0	&0.007	&0 & ... & Generic\\
+  0.000005	&119	&120	&0	&0.005	&0 & ... & Generic\\
+  
+   \bottomrule
+  
+  \end{tabular}
+  \end{table*}
+  
+
+由上节的分析可知，在CAMPUS数据集中，RNN仅利用了极少数的特征信息，为了捕获更多特征信息，因此需要挖掘特征之间的潜在关联。从本质上来说，各种机器学习、深度学习模型就是挖掘特征信息的过程。然而针对CAMPUS数据集，RNN模型无法有效提取信息，通常的做法有两种：
+\begin{enumerate}
+  \item 从特征工程着手，进行特征组合或者特征交叉（Feature Crosses）。如果直接进行特征组合，则复杂度过高，需要$O(N^2)$的计算复杂度，并且导致维度爆炸。因此常用的方法有因子分解机（Factorization Machines），对于每个原始特征，FM都会学习一个隐向量。FM通过穷举所有的特征对，并进行逐一检测特征对的权值来自动识别出有效的特征组合。
+  \item 从模型结构着手，在神经网络中增加额外辅助信息。例如机器翻译领域往往会加入文章的关键词、摘要等信息。这部分信息会影响到模型对于神经元参数的计算，从而影响特征权重。
+\end{enumerate}
+
+这两种做法各有优劣，方法1可以在线性时间内完成，但是只能对特征进行两两组合，并且组合信息难以进行解释；方法2能够捕捉到更多的关联信息，因此会增加神经网络的复杂性，带来额外的计算开销。由于本文使用的模型为预训练模型，无需在线实时训练，相比于几小时的模型训练时间，这部分计算延迟可以忽略，我们采用方法2挖掘特征潜在关系。
 
 为了在神经网络中引入特征关系矩阵，本文利用皮尔逊相关系数来计算流量特征之间的关系。皮尔逊相关的别名是积差相关（或者称之为积矩相关），命名来源是20 世纪英国的描述统计学派先驱皮尔逊。对于两个变量X、Y，它们之间的皮尔逊相关系数为：
 % 对于计算变量之间的线性相关性，他想到了一种方法，即假设当前存在两个变量X、Y，通过下列公式计算X、Y之间的皮尔逊相关系数：
@@ -204,7 +236,7 @@ FG-RNN算法的原理如图\ref{fig:FG-RNN原理图}所示。
   \caption{FG-RNN原理图}
   \label{fig:FG-RNN原理图}
 \end{figure}
-FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。
+FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。本算法的核心代码已上传到github平台\footnote{https://github.com/GTnull/FG-RNN}。
 \begin{algorithm}[!h]
   \caption{\emph{FG-RNN伪代码}}
   \label{FG-RNN伪代码}
@@ -298,7 +330,7 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。
   \end{figure}
 
 \subsection{实验结果对比}
-对于本文提出的模型和baseline模型，我们都进行了5次重复试验。从表\ref{不同数据集下实验评估结果FG}中可以看出，在UNSW-NB15和CICIDS2017数据集上，FG-RNN相比于基准模型没有明显提升，这可能是因为这两个数据集场景简单，各类算法的效果已经到达瓶颈。而在CAMPUS数据集上，FG-RNN明显好于LR、DT、RF这些基准模型，并且在基本的RNN类模型上提升巨大。
+对于本文提出的模型和baseline模型，我们都进行了5次重复试验。从表\ref{不同数据集下实验评估结果FG}中可以看出，在UNSW-NB15和CICIDS2017数据集上，FG-RNN相比于基准模型没有明显提升，这可能是因为这两个数据集场景简单，各类算法的效果已经到达瓶颈。而在CAMPUS数据集上，FG-RNN明显好于LR、DT、RF这些基准模型，并且在基本的RNN类模型上提升巨大。该表格中使用的指标为准确率，为了全方位对比实验结果，我们从准确率、召回率、F1-score、运行时长等多方面进行了对比。结果如下图所示。
 \begin{table*}[h]
   \small
   \caption{不同数据集下实验评估结果(\%)}
@@ -327,6 +359,46 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。
   \end{tabular}
   \end{table*}
 
+  \begin{figure}[htbp]
+    \centering
+    \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=1\linewidth]{实验结果对比-准确率.png}
+    \caption{实验结果对比-准确率}
+    \end{minipage}
+    \begin{minipage}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=1\linewidth]{实验结果对比-召回率.png}
+    \caption{实验结果对比-召回率}
+    \end{minipage}
+    \end{figure}
+
+    \begin{figure}[htbp]
+      \centering
+      \begin{minipage}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width=1\linewidth]{实验结果对比-F1.png}
+      \caption{实验结果对比-F1 score}
+      \end{minipage}
+      \begin{minipage}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width=1\linewidth]{实验结果对比-时间.png}
+      \caption{实验结果对比-时间-未完成}
+      \end{minipage}
+      \end{figure}
+% \begin{figure}
+%   \centering
+%   \includegraphics[width=0.6\linewidth]{实验结果对比-准确率.png}
+%   \caption{实验结果对比-准确率}
+%   \label{fig:实验结果对比-准确率}
+% \end{figure}
+
+% \begin{figure}
+%   \centering
+%   \includegraphics[width=0.6\linewidth]{实验结果对比-准确率.png}
+%   \caption{实验结果对比-准确率}
+%   \label{fig:实验结果对比-准确率}
+% \end{figure}
 \section{本章小结}
 为应对校园网流量环境的复杂情况，本章首先针对不同算法进行了特征分析，找出RNN在CAMPUS数据集中表现不佳的原因，然后设计了基于特征关系图的RNN算法，最后在多个数据集上进行了实验评估。
 % 根据第3章的实验结果，LSTM和GRU在CAMPUS数据集下准确率仅为65.4\%和67.8\%，而加入固定的特征关系图后，LSTM准确率即可达到81.2\%，将特征关系图与RNN同时训练，动态更新特征关系矩阵的参数，则FG-RNN算法的准确率可达到85.3\%。
