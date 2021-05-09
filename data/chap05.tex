@@ -39,7 +39,7 @@ Spark具有以下几个特点：
 
 
 
-如图\ref{fig:Spark组件}所示，Spark项目包含多个独立组件。其最核心的模块为深蓝色的Spark Core，其定义了核心API，如“弹性分布式数据集”，该模块也负责调度、监控计算集群中的计算任务，具有内存管理、故障恢复、与管理系统和存储系统交互等功能。为了满足分布式计算系统的可扩展性，Spark支持在各种集群管理器之上运行，例如图中灰色的模块Hadoop YARN，Apache Mesos以及浅蓝色的Spark系统中包含的“独立调度程序”（Standalone Scheduler）。在Spark Core之上，具有浅蓝色的四个组件：Spark SQL（处理结构化数据），Spark Streaming（实时处理海量数据），MLlib（运行机器学习模型），GraphX（提供图计算）。本文中的系统主要使用Spark Streaming组件。
+如图\ref{fig:Spark组件}所示\cite{spark}，Spark项目包含多个独立组件。其最核心的模块为深蓝色的Spark Core，其定义了核心API，如“弹性分布式数据集”，该模块也负责调度、监控计算集群中的计算任务，具有内存管理、故障恢复、与管理系统和存储系统交互等功能。为了满足分布式计算系统的可扩展性，Spark支持在各种集群管理器之上运行，例如图中灰色的模块Hadoop YARN，Apache Mesos以及浅蓝色的Spark系统中包含的“独立调度程序”（Standalone Scheduler）。在Spark Core之上，具有浅蓝色的四个组件：Spark SQL（处理结构化数据），Spark Streaming（实时处理海量数据），MLlib（运行机器学习模型），GraphX（提供图计算）。本文中的系统主要使用Spark Streaming组件。
 
 
 
@@ -59,7 +59,7 @@ Spark具有以下几个特点：
   \label{fig:spark工作原理}
 \end{figure}
 
-\section{系统各模块}
+\section{系统各模块设计}
 本文实现流量异常检测系统的架构如图\ref{fig:arch}所示，整个架构是基于Spark Streaming实现。本节将分模块具体介绍。
 \subsection{输入模块}
 输入模块的主要功能是对流式数据进行特征抽取，与第三章中的特征提取单一文件不同的是，本模块处理的数据是“无界”的。我们需要将无界数据进行切片，每次处理一个片段内的数据。这些片段又被称为“window”，window是流式计算领域的核心概念。
@@ -69,7 +69,7 @@ Spark具有以下几个特点：
 \begin{figure}
   \centering
   \includegraphics[scale=0.3]{特征提取.jpg}
-  \caption{特征提取}
+  \caption{特征提取流程图}
   \label{fig:特征提取}
 \end{figure}
 
@@ -159,13 +159,13 @@ Spark具有以下几个特点：
 % \end{figure}
 % \section{预测输出模块}
 \section{系统实现}
-本节对上述设计的异常检测系统进行了测试和验证。本文使用了三台主机搭建的集群运行该系统，分别命名为master、slave1、slave2，每台主机安装jdk-1.8.2，hadoop-2.7，spark-3.0，zookeeper-3.4，kafka-2.13等软件，用于搭建该系统所需要的环境，具体的配置参数如表所示。
+本节对上述设计的异常检测系统进行了测试和验证。本文使用了三台主机搭建的集群运行该系统，分别命名为master、slave1、slave2，每台主机安装jdk-1.8.2，hadoop-2.7，spark-3.0，zookeeper-3.4，kafka-2.13等软件，用于搭建该系统所需要的环境，具体的配置参数如表\ref{集群各节点的配置情况}所示。
 \begin{table*}[h]
   \small
   \caption{集群各节点的配置情况}
   \label{集群各节点的配置情况}
   \centering
-  \begin{tabular}{p{0.1\columnwidth}<{\centering} p{0.1\columnwidth}<{\centering} p{0.3\textwidth}<{\centering} p{0.45\textwidth}<{\centering}}
+  \begin{tabular}{p{0.1\columnwidth}<{\centering} p{0.1\columnwidth}<{\centering} p{0.3\textwidth}<{\centering} p{0.3\textwidth}<{\centering}}
   \toprule
   主机名 & 内存 & CPU &  进程 \\
   
@@ -192,12 +192,55 @@ Spark具有以下几个特点：
  \item 访问error.html，total.html等页面查看任务执行情况，访问hdfs系统中的输出查看检测结果。
 \end{enumerate}
 % 本节使用了第3章中CAMPUS数据集的第二段持续时长为18小时的数据作为系统的输入，经过测试，我们发现平均延迟3分钟即可将每个数据包的特征提取到相应的TCP/UDP流中，得到流的特征信息后，实时检测模块可以在1秒内输出异常类型。这得益于离线模型的定期更新。此外，我们还分析了该模型的失效时间，每次更新完一次模型的参数，可以看到随着时间的增长，模型效果越来越差，在5小时后准确率会低于60\%。
+\section{系统运行结果}
+我们在本系统中持续导入了约一天的流量数据以验证该系统的有效性。系统根据时间戳依次读取每个报文信息，提取特征，最终以5分钟为粒度汇报异常信息。我们将汇报结果与SOC平台中的告警信息进行对比，绘制了检测到的异常数量随时间变化图，如图\ref{fig:异常数量}所示，图中横坐标为时间轴，从2021-03-19 13:30开始，以5分钟为一个刻度，从图中可以看出：
+\begin{enumerate}
+  \item 异常数量分布不均匀，异常数量会出现瞬间增多的现象，结合图5.12的CDF图可以看出，80\%的时间内异常数量在300以内，1\%的时间内异常数量在4000以上。
+  \item 以SOC平台作为groudtruth，本系统大部分时刻能够有效检测出85\%以上的异常，但是部分时刻召回率极低，仅有10\%左右，例如图中25和127两个时刻点，分别对应2021-03-19 15:20和2021-03-20 00:05。经过进一步分析，我们发现此时88\%的异常类型为远控木马，而本系统几乎未能检测出远控木马这类异常。远控木马具有持续性长，欺骗性强等特点，从流量特征来看，其与正常流量十分相似，可能会有长期的定时心跳包，仅凭这一点特征本系统难以检测此类型的异常。
+\end{enumerate}
+% ，异常的分布很不均匀，80\%的时间内异常数量在300以内，1\%的时间异常数量在4000以上。异常峰值为2021-03-19 16:35:00 82283
+% 2021-03-19 20:05:00 56424
+% 2021-03-20 00:10:00 48579
+% 2021-03-20 05:35:00 90963 四个时间窗。系统检测到此时占比最多的异常是远控木马。
+
+% 以SOC的告警信息作为baseline，大部分时刻的检测准确率为85\%以上，
+
+
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\linewidth]{异常数量.pdf}
+  \caption{异常数量随时间变化图}
+  \label{fig:异常数量}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{异常数量cdf图.pdf}
+  \caption{异常数量CDF图}
+  \end{minipage}
+  \begin{minipage}[t]{0.48\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{15-20的异常分布.png}
+  \caption{15:20时刻的异常分布}
+  \end{minipage}
+  \end{figure}
+
+% \begin{figure}
+%   \centering
+%   \includegraphics[width=1\linewidth]{异常数量cdf图.pdf}
+%   \caption{异常数量CDF图}
+%   \label{fig:异常数量CDF图}
+% \end{figure}
 
 \section{系统应用}
 在应用上述异常检测系统进行检测时，我们发现根据特征分析以及检测结果，该系统能够更有效地检测出DDoS、PortScan等异常。
 
 我们发现在校园网vlan-pool架构下，出现大量PortScan时，由于外部主机试图访问内网不存在的主机，会在子网内部引发arp报文，导致时延增高。PortScan本身是个安全问题，但是由于vlan-pool对arp报文的放大效应，引发了一定的性能问题。
-针对这个问题，该系统能够检测出扫描ip并输出ip list，由运维人员进行异常ip的封禁。经过模拟，该方法能够降低部分区域10-20ms的平均时延。
+发现该问题后，为了定量分析PortScan对无线网性能的具体影响，我们搭建了一个小型子网进行了模拟仿真实验。该子网包含1个AP和10台终端设备，通过iperf控制AP的负载，nmap控制扫描流量的数量。针对这个问题，该系统能够检测出扫描ip并输出ip list，由运维人员进行异常ip的封禁。经过模拟，该方法能够降低部分区域10-20ms的平均时延。
 
 \section{本章小结}
-这一章设计并实现了一个流量异常检测系统，首先分别分模块对其进行了介绍，然后介绍了搭建系统的参数和流程，最后，介绍了系统在检测PortScan时的具体应用。
+这一章设计并实现了一个流量异常检测系统，首先分别分模块对其进行了介绍，然后介绍了搭建系统的参数和流程，最后，对系统的部分运行结果进行了分析，并且介绍了系统在检测PortScan时的具体应用。
