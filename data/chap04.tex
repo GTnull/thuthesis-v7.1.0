@@ -334,7 +334,7 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。本算法的核�
 \begin{enumerate}
   \item 各类算法在开源数据集上的效果均要好于在CAMPUS数据集上的效果，这是因为CAMPUS数据集远比其余数据集更复杂。
   \item FG-RNN在精确率指标上比机器学习模型提升了约10.8\%，比深度学习模型提升了超过50\%，说明FG能够为RNN有效增加特征信息。
-  \item 从召回率来看，FG-RNN没有很好地提高召回率，说明该模型会发生很多“漏报”情况。
+  \item 从召回率来看，相比于baseline模型，FG-RNN没有很好地提高召回率，说明该模型会发生很多“漏报”情况，后续我们更详细地分析了不同类别异常的召回率。
   \item F1-score兼顾了精确率和召回率的评估。由于召回率的影响，FG-RNN仅比机器学习模型提升了2\%的F1-score。后续工作可以考虑从提高召回率的角度优化模型。
   \item 由于数据集大小不同，对比同一算法在不同数据集上的运行时间没有意义。在相同数据集上，可以看出RNN类模型的训练时间要普遍比机器学习模型耗时更长，而FG-RNN又要消耗约两倍的时间，但是相比于准召和F1-score带来的提升，这些训练开销是可以接受的。
 \end{enumerate}
@@ -370,12 +370,12 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。本算法的核�
     \centering
     \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=1\linewidth]{实验结果对比-准确率.png}
+    \includegraphics[width=1\linewidth]{实验结果对比-准确率.pdf}
     \caption{实验结果对比-精确率}
     \end{minipage}
     \begin{minipage}[t]{0.48\textwidth}
     \centering
-    \includegraphics[width=1\linewidth]{实验结果对比-召回率.png}
+    \includegraphics[width=1\linewidth]{实验结果对比-召回率.pdf}
     \caption{实验结果对比-召回率}
     \end{minipage}
     \end{figure}
@@ -384,13 +384,13 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。本算法的核�
       \centering
       \begin{minipage}[t]{0.48\textwidth}
       \centering
-      \includegraphics[width=1\linewidth]{实验结果对比-F1.png}
+      \includegraphics[width=1\linewidth]{实验结果对比-F1.pdf}
       \caption{实验结果对比-F1 score}
       \end{minipage}
       \begin{minipage}[t]{0.48\textwidth}
       \centering
-      \includegraphics[width=1\linewidth]{实验结果对比-时间.png}
-      \caption{实验结果对比-时间-未完成}
+      \includegraphics[width=1\linewidth]{实验结果对比-Time.pdf}
+      \caption{实验结果对比-时间}
       \end{minipage}
       \end{figure}
 % \begin{figure}
@@ -406,6 +406,28 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。本算法的核�
 %   \caption{实验结果对比-准确率}
 %   \label{fig:实验结果对比-准确率}
 % \end{figure}
+% 僵尸网络：周期性强，规律性强；暴力猜解：时间间隔；拒绝服务； 流氓推广：大量下载行为，多个TCP流；
+% 远控木马：大量上传行为；网络蠕虫：自动扩散
+接下来，我们针对FG-RNN模型在CAMPUS数据集中的实验结果，具体分析了每种异常类型的准确率和召回率。将准确率定义为：
+\begin{equation}
+  P = \frac{\mbox{模型检测出的真正的异常量}}{\mbox{模型检测出的异常量}}
+\end{equation}
+召回率定义为：
+\begin{equation}
+  R = \frac{\mbox{模型检测出的真正异常量}}{\mbox{数据集中的全部异常量}}
+\end{equation}
+如图\ref{fig:不同异常类型的准召对比}所示，模型的准确率整体而言尚可，最低为远控木马类的76.3\%，最高为拒绝服务类的90.5\%，平均为82.7\%，这体现了模型检测结果误报率低的特点，检测结果具有较强的可信度。但是模型对于不同类型异常的召回率相差很大，远控木马仅为12\%，而暴力猜解为94.3\%，平均为78.8\%，以平均值作为分界线，高于平均值的类别有僵尸网络、暴力猜解、拒绝服务、流氓推广、端口扫描，低于平均值的类别有远控木马、网络蠕虫、代码执行，这些类别具有较强的伪装性，往往和正常流量的模式行为极为相似。从召回率可以看出，模型在检测某些特定异常时效果不佳，存在较严重的漏报，由于其余类别的召回率优于baseline模型，所以我们可以将这些特定异常类别的检测结果仅作为参考。这部分缺陷也是我们未来工作中进行优化的方向。
+
+% 因为暴力猜解的流量特征比较明显，可以很容易学习到特征，远控木马的特点是，僵尸网络：周期性强，规律性强；暴力猜解：时间间隔；拒绝服务； 流氓推广：大量下载行为，多个TCP流；
+% 远控木马：大量上传行为；网络蠕虫：自动扩散
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1\linewidth]{不同异常类型的准召对比.pdf}
+  \caption{不同异常类型的准召对比}
+  \label{fig:不同异常类型的准召对比}
+\end{figure}
+
 \section{本章小结}
 为应对校园网流量环境的复杂情况，本章首先针对不同算法进行了特征分析，找出RNN在CAMPUS数据集中表现不佳的原因，然后设计了基于特征关系图的RNN算法，最后在多个数据集上进行了实验评估。
 % 根据第3章的实验结果，LSTM和GRU在CAMPUS数据集下准确率仅为65.4\%和67.8\%，而加入固定的特征关系图后，LSTM准确率即可达到81.2\%，将特征关系图与RNN同时训练，动态更新特征关系矩阵的参数，则FG-RNN算法的准确率可达到85.3\%。
