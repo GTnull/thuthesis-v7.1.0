@@ -1,12 +1,12 @@
 % !TeX root = ../thuthesis-example.tex
 
-\chapter{相关工作}
+\chapter{异常检测算法分析与对比}
 
 \section{引言}
 
-本章对网络流量异常检测领域的相关工作进行了综述。首先介绍了网络流量异常的定义和分类，异常检测系统的通用框架如图~\ref{fig:scheme}所示\cite{fernandes2019comprehensive}。然后介绍了流量异常领域常用的各类算法，由于本文主要工作是以循环神经网络作为基础，接下来介绍了RNN及其变体的原理，最后给出了本章小结。
+首先本章介绍网络流量异常的定义和分类，异常检测系统的通用框架如图~\ref{fig:scheme}所示\cite{fernandes2019comprehensive}。然后介绍流量异常领域常用的各类算法，由于本文主要工作是以循环神经网络作为基础，接下来介绍了RNN及其变体的原理。然后介绍了常用的异常检测数据集和本文中使用的校园网数据集并在这些数据集上对异常检测算法进行了分析与对比。
 
-
+% 本章首先对网络流量异常检测领域的相关工作进行了综述，然后介绍了常用的异常检测数据集和本文中使用的校园网数据集，最后在多个数据集上对异常检测算法进行了分析与对比。
 % 其基础是建立一个代表正常/预期网络行为的基线轮廓，并将任何观察到的与该轮廓相比的当前活动的偏差视为异常。这个基线主要通过统计和历史网络流量数据生成。
 
 
@@ -83,17 +83,18 @@ Kruegel等人\cite{kruegel2003bayesian} 假设异常检测系统包含许多模�
 神经网络是深度学习的热门技术，早已在多个方面实践成功，但其对计算量的要求很高。神经网络对数据进行分类的优势也可被用于网络异常检测。在网络异常检测领域，神经网络通常会和其他技术进行结合，如统计方法。
 
 
-Hawkins等人\cite{hawk2002Outlier}提出了一个多层的前馈神经网络，该神经网络可以用来进行异常值的检测。这个多层前馈的神经网络(multi-layer feed-forward neural networks)也就是Replicator Neural Networks。具体而言，它的运行方式是设置了三个隐藏层，夹在输入层和输出层的中间，目标是通过训练，使输出层能以最小的误差重现出输入的数据模式。其原理在于输入层与输出层节点的数量比隐藏层节点的数量要多，因此隐藏层能够具有压缩数据和恢复数据的作用。Replicator Neural Networks的示意图如图~\ref{fig:rnn}所示。
+Hawkins等人\cite{hawk2002Outlier}提出了一个多层的前馈神经网络，该神经网络可以用来进行异常值的检测。这个多层前馈的神经网络(multi-layer feed-forward neural networks)也就是Replicator Neural Networks。具体而言，它的运行方式是设置了三个隐藏层，夹在输入层和输出层的中间，目标是通过训练，使输出层能以最小的误差重现出输入的数据模式。其原理在于输入层与输出层节点的数量比隐藏层节点的数量要多，因此隐藏层能够具有压缩数据和恢复数据的作用。
+% Replicator Neural Networks的示意图如图~\ref{fig:rnn}所示。
 
 % Hawkins等人\cite{hawk2002Outlier} 提出了一个多层的前馈神经网络，该神经网络可以用来进行异常值的检测。具体来说，Replicator Neural Networks是一个多层前馈的神经网络 (multi-layer feed-forward neural networks)，在输入层和输出层之间放置了三个隐藏层，它的目标是通过训练在输出层以最小的误差重现出输入的数据模式。由于该模型中间隐藏层节点的个数少于输入输出层节点的个数，这样就起到了压缩数据和恢复数据的作用。
 % Replicator Neural Networks的示意图如图~\ref{fig:rnn}所示。
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.6\linewidth]{RNN.jpg}
-    \caption{Replicator Neural Networks示意图}
-    \label{fig:rnn}
-  \end{figure}
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=0.6\linewidth]{RNN.jpg}
+%     \caption{Replicator Neural Networks示意图}
+%     \label{fig:rnn}
+%   \end{figure}
 
   \citet{2001HIDE} 提出了一种分层入侵检测模式，这是他在神经网络的技术基础上搭配了统计方法建立的模型，此系统用一个连续变量($t$)表示神经网络分类器的输出，若变量为1那么当前没有攻击，而-1出现时则是确切的入侵。
   
@@ -144,7 +145,7 @@ Fernandes等人\cite{fernandes2016network}发表了根据统计程序主成分�
 Yeung等人\cite{yeung2007covariance}采用协方差矩阵分析来检测洪泛攻击。该方法将网络流量建模为协方差矩阵样本，以利用时序样本中包含的统计量达到检测泛洪攻击的目的，直接利用协方差矩阵的变化和相关特征的差异来揭示正常流量与各种类型的洪泛攻击之间的变化。
 
 
- Miao Xie等人\cite{xie2014segment}研究了一种基于段的方式处理数据的技术。因为在无线传感器网络(WSNs)中，人们观察到大多数异常事件都会持续相当长的时间。由于现有的异常检测技术通常是以基于点的方式单独处理每个观测值，它们无法可靠和有效地报告在单个传感器节点中出现的这种长期异常。因此该方法采用斯皮尔曼等级相关系数（Spearman's rank correlation coefficient 或 Spearman's $\rho$）和差分压缩概念近似的样本协方差矩阵，以大幅降低计算和通信成本。
+ Xie等人\cite{xie2014segment}研究了一种基于段的方式处理数据的技术。因为在无线传感器网络(WSNs)中，人们观察到大多数异常事件都会持续相当长的时间。由于现有的异常检测技术通常是以基于点的方式单独处理每个观测值，它们无法可靠和有效地报告在单个传感器节点中出现的这种长期异常。因此该方法采用斯皮尔曼等级相关系数（Spearman's rank correlation coefficient 或 Spearman's $\rho$）和差分压缩概念近似的样本协方差矩阵，以大幅降低计算和通信成本。
 
 
 
@@ -517,5 +518,6 @@ RNN伪代码如算法\ref{RNN伪代码} 所示，架构图如图\ref{fig:普通R
 由图\ref{fig:GRU结构}中结构可以看出\cite{rnn-structure}，GRU是通过一个循环神经网络和“门”机制来不断更新内部参数。
 
 
-\section{本章小结}
-本章是相关工作，首先介绍了网络流量异常的定义和分类，然后按照不同的类别综述了网络流量异常检测的常用算法，最后介绍了循环神经网络的相关原理。
+% \section{本章小结}
+% % 本章是相关工作，首先介绍了网络流量异常的定义和分类，然后按照不同的类别综述了网络流量异常检测的常用算法，最后介绍了循环神经网络的相关原理。
+% 本章首先对网络流量异常检测领域的相关工作进行了综述，然后介绍了常用的异常检测数据集和本文中使用的校园网数据集，最后在多个数据集上对异常检测算法进行了分析与对比。
