@@ -230,7 +230,7 @@ SHAP特征重要度的原理是Shapley绝对值越大，其对应的特征越重
     H^{(t)} = u^{(t)}\odot H^{(t-1)} + (1 - u^{(t)}) \odot C^{(t)}
 \end{equation}
 
-其中$X^{(t)}$, $H^{(t)}$表示在时间 $t$ 的输入和输出，$r^{(t)}$ $u^{(t)}$分别是在时间 $t$的复位门和更新门。$\star G$  表示扩散卷积，并且  是对应滤波器的参数。与GRU相似，该模型可用于构建递归神经网络层，并使用反向传播进行训练。
+其中$X^{(t)}$, $H^{(t)}$表示在时间 $t$ 的输入和输出，$r^{(t)}$ $u^{(t)}$分别是在时间 $t$的复位门和更新门，$\star G$  表示扩散卷积。与GRU相似，该模型可用于构建递归神经网络层，并使用反向传播进行训练。
 FG-RNN算法的原理如图\ref{fig:FG-RNN原理图}所示。
 \begin{figure}[H]
   \centering
@@ -239,7 +239,7 @@ FG-RNN算法的原理如图\ref{fig:FG-RNN原理图}所示。
   \label{fig:FG-RNN原理图}
 \end{figure}
 
-在接下来的多步预测中，我们采用了seq2seq结果\cite{sutskever2014sequence}。编码器和解码器都是使用具有GRU的递归神经网络。 在训练过程中，我们将历史时间序列输入编码器，并使用其最终状态来初始化解码器。 解码器根据先前的观测值生成预测。在测试时，真实值将由模型本身生成的预测值代替。 训练集和测试集分布之间的差异会导致性能下降。 为了解决这个问题，我们将预采样\cite{bengio2015scheduled}集合到模型中，其中，我们向模型提供概率为$\epsilon_i$的真实观测值或者 第i次迭代时模型以概率为$1-\epsilon_i$进行预测。 在训练过程中，$\epsilon_i$逐渐减少到0，以不断逼近真实观测值的数据分布。
+在接下来的多步预测中，我们采用了seq2seq结果\cite{sutskever2014sequence}。编码器和解码器都是使用具有GRU的递归神经网络。 在训练过程中，我们将历史时间序列输入到编码器，并使用其最终状态来初始化解码器，解码器根据先前的观测值生成预测值。在检测时，真实值与模型生成的预测值进行对比，差异过大则为异常。 训练集和测试集分布之间的差异会导致性能下降。 为了解决这个问题，我们将预采样\cite{bengio2015scheduled}集合到模型中，其中，我们向模型提供概率为$\epsilon_i$的真实观测值或者 第i次迭代时模型以概率为$1-\epsilon_i$进行预测。 在训练过程中，$\epsilon_i$逐渐减少到0，以不断逼近真实观测值的数据分布。
 
 FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。本算法的核心代码已上传到github平台\footnote{https://github.com/GTnull/FG-RNN}。
 \begin{algorithm}[!h]
@@ -247,7 +247,7 @@ FG-RNN算法的伪代码如算法\ref{FG-RNN伪代码}所示。本算法的核�
   \label{FG-RNN伪代码}
   \begin{algorithmic}[1]
     \Require
-      一组按时间排序的向量组$\vec{x_1}$,$\vec{x_2}$,...,$\vec{x_T}$, 特征间关系图$G$以及它的邻接矩阵$W$
+      一组按时间排序的向量组$\vec{x_1}$,$\vec{x_2}$,...,$\vec{x_T}$，特征间关系图$G$以及它的邻接矩阵$W$
 
     \Ensure
       按时间排序的向量组$\vec{h_1}$,$\vec{h_2}$,...,$\vec{h_T}$
@@ -394,21 +394,21 @@ $\delta_G$指的是图中最长的最短距离（the length of the longest short
 
 
 \subsection{训练过程对比}
-图\ref{fig:随着训练轮次的增加准确率的变化}中横坐标为FG-RNN和LSTM两个算法随训练轮次的增加，准确率的变化，可以看出LSTM训练时间更短，大约25轮即可稳定，而FG-RNN需要训练50轮以上。
+图\ref{fig:FG-RNN和LSTM准确率对比}中横坐标为FG-RNN和LSTM两个算法的训练轮次，纵坐标为准确率。两种算法均存在随着训练轮次的增多，准确率先提高再略微下降的现象，可以看出达到最佳准确率时LSTM训练时间更短，大约25轮即可稳定，而FG-RNN需要训练50轮以上。
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{accuracy_epoches.png}
-    \caption{随着训练轮次的增加准确率的变化}
-    \label{fig:随着训练轮次的增加准确率的变化}
+    \caption{FG-RNN和LSTM准确率对比}
+    \label{fig:FG-RNN和LSTM准确率对比}
   \end{figure}
 
-图\ref{fig:loss收敛对比}表示FG-RNN和LSTM两个算法loss收敛的对比，在达到稳定的准确率后，loss也会维持一个相对稳定的水平。
+图\ref{fig:FG-RNN和LSTM loss收敛对比}表示FG-RNN和LSTM两个算法loss收敛的对比，在达到稳定的准确率后，loss也会维持一个相对稳定的水平。
   \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{loss_epoch.png}
-    \caption{loss收敛对比}
-    \label{fig:loss收敛对比}
+    \caption{FG-RNN和LSTM loss收敛对比}
+    \label{fig:FG-RNN和LSTM loss收敛对比}
   \end{figure}
 
 \subsection{实验结果对比}
@@ -453,12 +453,12 @@ $\delta_G$指的是图中最长的最短距离（the length of the longest short
     \begin{minipage}[t]{0.48\textwidth}
     \centering
     \includegraphics[width=1\linewidth]{实验结果对比-准确率.pdf}
-    \caption{实验结果对比-准确率}
+    \caption{准确率对比}
     \end{minipage}
     \begin{minipage}[t]{0.48\textwidth}
     \centering
     \includegraphics[width=1\linewidth]{实验结果对比-召回率.pdf}
-    \caption{实验结果对比-召回率}
+    \caption{召回率对比}
     \end{minipage}
     \end{figure}
 
@@ -467,12 +467,12 @@ $\delta_G$指的是图中最长的最短距离（the length of the longest short
       \begin{minipage}[t]{0.48\textwidth}
       \centering
       \includegraphics[width=1\linewidth]{实验结果对比-F1.pdf}
-      \caption{实验结果对比-F1 score}
+      \caption{F1 score对比}
       \end{minipage}
       \begin{minipage}[t]{0.48\textwidth}
       \centering
       \includegraphics[width=1\linewidth]{实验结果对比-Time.pdf}
-      \caption{实验结果对比-时间}
+      \caption{运行时间对比}
       \end{minipage}
       \end{figure}
 % \begin{figure}
